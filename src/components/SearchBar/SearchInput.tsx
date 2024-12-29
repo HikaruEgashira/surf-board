@@ -9,7 +9,6 @@ interface SearchInputProps {
   onClear?: () => void;
   placeholder?: string;
   className?: string;
-  debounceDelay?: number;
 }
 
 export function SearchInput({
@@ -20,61 +19,28 @@ export function SearchInput({
   onClear,
   placeholder = 'Search code...',
   className = '',
-  debounceDelay = 500
 }: SearchInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  const lastSearchRef = useRef<string>('');
-
-  const handleSubmit = useCallback((force: boolean = false) => {
-    const trimmedValue = value.trim();
-    // 強制実行でない場合のみ、前回と同じ検索クエリをスキップ
-    if (!force && trimmedValue === lastSearchRef.current) return;
-
-    onSubmit();
-    lastSearchRef.current = trimmedValue;
-  }, [value, onSubmit]);
-
-  const handleBlur = useCallback(() => {
-    // 値が空の場合は初期状態に戻す
-    if (value.trim() === '') {
-      onChange('');
-      lastSearchRef.current = '';
-    }
-    onBlur?.();
-  }, [value, onChange, onBlur]);
 
   const handleKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(true); // 強制実行
+      onSubmit();
     }
   };
 
-  // 入力値が変更された時のデバウンス処理
-  useEffect(() => {
-    // 前回のタイマーをクリア
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+  const handleBlur = useCallback(() => {
+    if (value.trim() === '') {
+      onChange('');
     }
+    onBlur?.();
+  }, [value, onChange, onBlur]);
 
-    // 空の入力値の場合は処理をスキップ
-    const trimmedValue = value.trim();
-    if (trimmedValue === '') return;
-
-    // 3文字以上の場合のみ自動検索を実行
-    if (trimmedValue.length >= 3) {
-      // 新しいタイマーをセット
-      debounceTimerRef.current = setTimeout(handleSubmit, debounceDelay);
-    }
-
-    // クリーンアップ関数
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [value, debounceDelay, handleSubmit]);
+  // 入力値の変更を即座に通知
+  const handleChange = (newValue: string) => {
+    onChange(newValue);
+    onSubmit();
+  };
 
   // スラッシュキーでの検索フォーカス
   useEffect(() => {
@@ -98,7 +64,7 @@ export function SearchInput({
         ref={inputRef}
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => handleChange(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
         className="block w-full pl-9 pr-16 py-2 bg-white dark:bg-gray-800/95
@@ -114,7 +80,6 @@ export function SearchInput({
         <button
           onClick={() => {
             onClear?.();
-            lastSearchRef.current = '';
           }}
           className="absolute right-8 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           aria-label="Clear search"

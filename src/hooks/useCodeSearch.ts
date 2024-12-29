@@ -13,16 +13,9 @@ const API_CONSTANTS = {
 } as const;
 
 // ファイル拡張子の設定
-const FILE_EXTENSIONS = {
-  NON_PROGRAMMING: new Set([
-    'md', 'markdown', 'txt', 'doc', 'docx',
-    'pdf', 'csv', 'json', 'xml', 'yaml', 'yml',
-    'html', 'htm', 'css', 'scss', 'sass',
-    'png', 'jpg', 'jpeg', 'gif', 'svg',
-    'mp3', 'mp4', 'wav', 'avi',
-    'zip', 'tar', 'gz', 'rar',
-  ])
-} as const;
+const NON_PROGRAMMING_EXTENSIONS = new Set([
+  'md', 'markdown', 'csv', 'json', 'xml', 'yaml', 'yml', 'html', 'htm'
+])
 
 // ユーティリティ関数
 const utils = {
@@ -30,7 +23,7 @@ const utils = {
     const filename = path.split('/').pop() || '';
     const extension = filename.split('.').pop()?.toLowerCase();
     if (!extension) return false;
-    return !FILE_EXTENSIONS.NON_PROGRAMMING.has(extension);
+    return !NON_PROGRAMMING_EXTENSIONS.has(extension);
   },
   delay: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
   createGitHubHeaders: (token: string) => ({
@@ -44,7 +37,15 @@ const utils = {
   }
 };
 
-export function useCodeSearch() {
+interface UseCodeSearchOptions {
+  debounceDelay?: number;
+  minQueryLength?: number;
+}
+
+export function useCodeSearch({
+  debounceDelay = 500,
+  minQueryLength = 3
+}: UseCodeSearchOptions = {}) {
   const { token } = useGitHubToken();
   const { excludeNonProgramming } = useSearchSettings();
   const [results, setResults] = useState<CodeSearchResult[]>([]);
@@ -58,14 +59,17 @@ export function useCodeSearch() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef<number>(0);
   const filteredCountRef = useRef<number>(0);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const lastSearchRef = useRef<string>('');
 
-  const handleSearchReset = () => {
+  const handleSearchReset = useCallback(() => {
     setResults([]);
     setHasMore(false);
     setCurrentQuery('');
     setTotalResults(0);
     filteredCountRef.current = 0;
-  };
+    lastSearchRef.current = '';
+  }, []);
 
   const handleSearchResponse = useCallback(async (
     response: Response,
@@ -73,66 +77,82 @@ export function useCodeSearch() {
     page: number,
     currentRequestId: number
   ) => {
-    if (currentRequestId !== requestIdRef.current) return;
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-
-      if (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0') {
-        utils.handleRateLimitError(response.headers);
-      }
-
-      throw new Error(
-        errorData.message ||
-        `Failed to fetch code results: ${response.status} ${response.statusText}`
-      );
-    }
-
-    const data: SearchResponse = await response.json();
-    const totalPages = Math.ceil(data.total_count / API_CONSTANTS.PER_PAGE);
-
-    if (page === 1) {
-      setTotalResults(data.total_count);
-    }
-
-    setResults(prev => {
-      let newResults = page === 1 ? data.items : [...prev, ...data.items];
-
-      if (excludeNonProgramming) {
-        const filteredResults = newResults.filter(item => utils.isProgrammingFile(item.path));
-        const newFilteredCount = filteredResults.length;
-        const removedCount = newResults.length - newFilteredCount;
-        filteredCountRef.current += removedCount;
-        newResults = filteredResults;
-      }
-
-      if (newResults.length > API_CONSTANTS.MAX_STORED_RESULTS) {
-        newResults = newResults.slice(-API_CONSTANTS.MAX_STORED_RESULTS);
-      }
-
-      const remainingResults = totalResults - (page * API_CONSTANTS.PER_PAGE);
-      const remainingFilteredResults = remainingResults - filteredCountRef.current;
-
-      if (excludeNonProgramming && newResults.length === prev.length && page < totalPages) {
-        searchCode(query, page + 1);
-      }
-
-      setHasMore(remainingFilteredResults > 0 && page < totalPages);
-
-      return newResults;
-    });
-
-    setCurrentPage(page);
-  }, [excludeNonProgramming, totalResults]);
-
-  const searchCode = useCallback(async (query: string, page = 1, retryCount = 0) => {
-    if (!token) {
-      setError('GitHub token is required. Please set it in the settings.');
+    if (currentRequestId !== requestIdRef.current) {
       return;
     }
 
-    if (query === '') {
-      handleSearchReset();
+    try {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+
+        if (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0') {
+          utils.handleRateLimitError(response.headers);
+        }
+
+        throw new Error(
+          errorData.message ||
+          `Failed to fetch code results: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data: SearchResponse = await response.json();
+
+      if (currentRequestId !== requestIdRef.current) {
+        return;
+      }
+
+      const totalPages = Math.ceil(data.total_count / API_CONSTANTS.PER_PAGE);
+
+      if (page === 1) {
+        setTotalResults(data.total_count);
+      }
+
+      setResults(prev => {
+        if (currentRequestId !== requestIdRef.current) {
+          return prev;
+        }
+
+        let newResults = page === 1 ? data.items : [...prev, ...data.items];
+
+        if (excludeNonProgramming) {
+          const filteredResults = newResults.filter(item => utils.isProgrammingFile(item.path));
+          const newFilteredCount = filteredResults.length;
+          const removedCount = newResults.length - newFilteredCount;
+          filteredCountRef.current += removedCount;
+          newResults = filteredResults;
+        }
+
+        if (newResults.length > API_CONSTANTS.MAX_STORED_RESULTS) {
+          newResults = newResults.slice(-API_CONSTANTS.MAX_STORED_RESULTS);
+        }
+
+        const remainingResults = totalResults - (page * API_CONSTANTS.PER_PAGE);
+        const remainingFilteredResults = remainingResults - filteredCountRef.current;
+
+        if (excludeNonProgramming && newResults.length === prev.length && page < totalPages) {
+          setTimeout(() => {
+            if (currentRequestId === requestIdRef.current) {
+              executeSearch(query, page + 1);
+            }
+          }, 0);
+        }
+
+        setHasMore(remainingFilteredResults > 0 && page < totalPages);
+
+        return newResults;
+      });
+
+      setCurrentPage(page);
+    } catch (error) {
+      if (currentRequestId === requestIdRef.current) {
+        throw error;
+      }
+    }
+  }, [excludeNonProgramming, totalResults]);
+
+  const executeSearch = useCallback(async (query: string, page = 1, retryCount = 0) => {
+    if (!token) {
+      setError('GitHub token is required. Please set it in the settings.');
       return;
     }
 
@@ -169,34 +189,70 @@ export function useCodeSearch() {
       if (retryCount < API_CONSTANTS.MAX_RETRIES && err instanceof Error &&
         (err.message.includes('network') || err.message.includes('timeout'))) {
         await utils.delay(API_CONSTANTS.RETRY_DELAY * Math.pow(2, retryCount));
-        return searchCode(query, page, retryCount + 1);
+        return executeSearch(query, page, retryCount + 1);
       }
 
       setError(err instanceof Error ? err.message : 'An error occurred');
       setHasMore(false);
+    } finally {
+      if (currentRequestId === requestIdRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [token, handleSearchResponse]);
 
+  const searchCode = useCallback((query: string) => {
+    const trimmedQuery = query.trim();
+
+    // 前回のタイマーをクリア
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = undefined;
+    }
+
+    // 空の入力値の場合はリセット
+    if (trimmedQuery === '') {
+      handleSearchReset();
+      return;
+    }
+
+    // 最小文字数チェック
+    if (trimmedQuery.length < minQueryLength) {
+      return;
+    }
+
+    // 前回と同じクエリの場合はスキップ
+    if (trimmedQuery === lastSearchRef.current) {
+      return;
+    }
+
+    // デバウンスタイマーをセット
+    debounceTimerRef.current = setTimeout(() => {
+      lastSearchRef.current = trimmedQuery;
+      executeSearch(trimmedQuery);
+    }, debounceDelay);
+  }, [debounceDelay, minQueryLength, handleSearchReset, executeSearch]);
+
   const loadMore = useCallback(() => {
     if (!isLoading && hasMore && currentQuery) {
-      searchCode(currentQuery, currentPage + 1);
+      executeSearch(currentQuery, currentPage + 1);
     }
-  }, [isLoading, hasMore, currentQuery, currentPage, searchCode]);
+  }, [isLoading, hasMore, currentQuery, currentPage, executeSearch]);
 
   useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
     };
   }, []);
 
-  useEffect(() => {
-    const currentRequestId = requestIdRef.current;
-    if (currentRequestId === requestIdRef.current) {
-      setIsLoading(results.length === 0 && currentQuery !== '');
-    }
-  }, [results, currentQuery]);
+  const isLastPage = useCallback(() => {
+    return !hasMore && results.length > 0 && currentQuery !== '';
+  }, [hasMore, results.length, currentQuery]);
 
   return {
     results,
@@ -206,5 +262,6 @@ export function useCodeSearch() {
     searchCode,
     loadMore,
     totalResults,
+    isLastPage: isLastPage(),
   };
 }
