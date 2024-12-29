@@ -4,6 +4,7 @@ import CodeResult from '../CodeResult';
 import CodeResultSkeleton from '../CodeResultSkeleton';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import type { CodeSearchResult } from '../../types';
+import { useEffect, useRef } from 'react';
 
 interface SearchResultsProps {
   results: CodeSearchResult[];
@@ -13,7 +14,31 @@ interface SearchResultsProps {
 }
 
 export default function SearchResults({ results, isLoading, hasMore, loadMore }: SearchResultsProps) {
+  const observerTargetRef = useRef<HTMLDivElement>(null);
   const lastItemRef = useInfiniteScroll(loadMore, { hasMore, isLoading });
+
+  // 結果が0件の場合や、最後のアイテムがビューポートに入らない場合のフォールバック
+  useEffect(() => {
+    if (results.length === 0 && hasMore && !isLoading) {
+      loadMore();
+      return;
+    }
+
+    // 結果が少なく、スクロールが発生しない場合の処理
+    if (observerTargetRef.current && hasMore && !isLoading) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            loadMore();
+          }
+        },
+        { threshold: 0.1 }
+      );
+
+      observer.observe(observerTargetRef.current);
+      return () => observer.disconnect();
+    }
+  }, [results.length, hasMore, isLoading, loadMore]);
 
   console.log('SearchResults render:', {
     resultsCount: results.length,
@@ -26,16 +51,21 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore }:
     'mx-auto w-full rounded-lg overflow-hidden'
   );
 
-  // Create a unique key for each result
   const getResultKey = (result: CodeSearchResult) => {
     return `${result.sha}-${result.repository?.full_name}-${result.path}`;
   };
 
   const renderResults = () => {
+    if (results.length === 0) {
+      return (
+        <div ref={observerTargetRef} className="h-20" />
+      );
+    }
+
     return results.map((result, index) => (
       <div
         key={getResultKey(result)}
-        ref={index === results.length - 1 && hasMore && !isLoading ? lastItemRef : undefined}
+        ref={index === results.length - 1 ? lastItemRef : undefined}
       >
         <motion.div
           initial={{ opacity: 0 }}
