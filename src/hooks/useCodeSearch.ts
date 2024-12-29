@@ -106,10 +106,10 @@ export function useCodeSearch() {
       }
 
       const data: SearchResponse = await response.json();
-      const totalPages = Math.ceil(Math.min(data.total_count, MAX_ITEMS) / PER_PAGE);
+      const totalPages = Math.ceil(data.total_count / PER_PAGE);
 
       if (page === 1) {
-        setTotalResults(Math.min(data.total_count, MAX_ITEMS));
+        setTotalResults(data.total_count);
       }
 
       setResults(prev => {
@@ -163,10 +163,6 @@ export function useCodeSearch() {
 
       setError(err instanceof Error ? err.message : 'An error occurred');
       setHasMore(false);
-    } finally {
-      if (currentRequestId === requestIdRef.current) {
-        setIsLoading(false);
-      }
     }
   }, [token, excludeNonProgramming]);
 
@@ -183,6 +179,14 @@ export function useCodeSearch() {
       }
     };
   }, []);
+
+  // resultsの状態を監視してloadingを制御
+  useEffect(() => {
+    const currentRequestId = requestIdRef.current;
+    if (currentRequestId === requestIdRef.current) {
+      setIsLoading(results.length === 0 && currentQuery !== '');
+    }
+  }, [results, currentQuery]);
 
   return {
     results,
