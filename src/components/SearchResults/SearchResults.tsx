@@ -15,6 +15,12 @@ interface SearchResultsProps {
 export default function SearchResults({ results, isLoading, hasMore, loadMore }: SearchResultsProps) {
   const lastItemRef = useInfiniteScroll(loadMore, { hasMore, isLoading });
 
+  console.log('SearchResults render:', {
+    resultsCount: results.length,
+    hasMore,
+    isLoading
+  });
+
   const containerClasses = cn(
     'divide-y divide-nord-4 dark:divide-nord-2 max-w-full',
     'mx-auto w-full rounded-lg overflow-hidden'
@@ -29,7 +35,7 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore }:
     return results.map((result, index) => (
       <div
         key={getResultKey(result)}
-        ref={index === results.length - 1 ? lastItemRef : undefined}
+        ref={index === results.length - 1 && hasMore && !isLoading ? lastItemRef : undefined}
       >
         <motion.div
           initial={{ opacity: 0 }}
@@ -47,7 +53,7 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore }:
     <div className={containerClasses}>
       <AnimatePresence>
         {renderResults()}
-        {(hasMore || isLoading) && (
+        {isLoading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
