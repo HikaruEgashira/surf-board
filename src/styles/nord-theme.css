@@ -1,0 +1,62 @@
+/* Nord theme colors */
+:root {
+    --nord0: #2E3440;
+    --nord1: #3B4252;
+    --nord2: #434C5E;
+    --nord3: #4C566A;
+    --nord4: #D8DEE9;
+    --nord5: #E5E9F0;
+    --nord6: #ECEFF4;
+    --nord7: #8FBCBB;
+    --nord8: #88C0D0;
+    --nord9: #81A1C1;
+    --nord10: #5E81AC;
+    --nord11: #BF616A;
+    --nord12: #D08770;
+    --nord13: #EBCB8B;
+    --nord14: #A3BE8C;
+    --nord15: #B48EAD;
+}
+
+/* Nord dark theme styles */
+.nord-theme {
+    --bg-primary: var(--nord0);
+    --bg-secondary: var(--nord1);
+    --text-primary: var(--nord6);
+    --text-secondary: var(--nord4);
+    --border-color: var(--nord3);
+    --accent-color: var(--nord8);
+    --hover-color: var(--nord2);
+}
+
+.nord-theme.dark {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.nord-theme .bg-blue-600 {
+    background-color: var(--nord10) !important;
+}
+
+.nord-theme .bg-blue-600:hover {
+    background-color: var(--nord9) !important;
+}
+
+.nord-theme .focus\:ring-blue-500:focus {
+    --tw-ring-color: var(--nord10) !important;
+}
+
+.nord-theme .focus\:border-blue-500:focus {
+    border-color: var(--nord10) !important;
+}
+
+.nord-theme input {
+    background-color: var(--nord1);
+    border-color: var(--nord3);
+    color: var(--nord6);
+}
+
+.nord-theme input:focus {
+    border-color: var(--nord8);
+    ring-color: var(--nord8);
+}

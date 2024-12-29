@@ -1,0 +1,99 @@
+/**
+ * Nord theme for Prism.js
+ */
+:root {
+  --nord0: #2E3440;
+  --nord1: #3B4252;
+  --nord2: #434C5E;
+  --nord3: #4C566A;
+  --nord4: #D8DEE9;
+  --nord5: #E5E9F0;
+  --nord6: #ECEFF4;
+  --nord7: #8FBCBB;
+  --nord8: #88C0D0;
+  --nord9: #81A1C1;
+  --nord10: #5E81AC;
+  --nord11: #BF616A;
+  --nord12: #D08770;
+  --nord13: #EBCB8B;
+  --nord14: #A3BE8C;
+  --nord15: #B48EAD;
+}
+
+[data-syntax-theme="light"] {
+  --syntax-bg: var(--nord6);
+  --syntax-text: var(--nord0);
+  --syntax-comment: var(--nord3);
+  --syntax-keyword: var(--nord9);
+  --syntax-function: var(--nord8);
+  --syntax-string: var(--nord14);
+  --syntax-number: var(--nord15);
+  --syntax-class: var(--nord7);
+  --syntax-variable: var(--nord4);
+}
+
+[data-syntax-theme="dark"] {
+  --syntax-bg: var(--nord0);
+  --syntax-text: var(--nord6);
+  --syntax-comment: var(--nord3);
+  --syntax-keyword: var(--nord9);
+  --syntax-function: var(--nord8);
+  --syntax-string: var(--nord14);
+  --syntax-number: var(--nord15);
+  --syntax-class: var(--nord7);
+  --syntax-variable: var(--nord4);
+}
+
+code[class*="language-"],
+pre[class*="language-"] {
+  color: var(--syntax-text);
+  background: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  tab-size: 4;
+  hyphens: none;
+}
+
+pre[class*="language-"] {
+  padding: 1em;
+  margin: .5em 0;
+  overflow: auto;
+  border-radius: 0.3em;
+  background: var(--syntax-bg);
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: var(--syntax-comment);
+}
+
+.token.function {
+  color: var(--syntax-function);
+}
+
+.token.keyword {
+  color: var(--syntax-keyword);
+}
+
+.token.string {
+  color: var(--syntax-string);
+}
+
+.token.number {
+  color: var(--syntax-number);
+}
+
+.token.class-name {
+  color: var(--syntax-class);
+}
+
+.token.variable {
+  color: var(--syntax-variable);
+}
