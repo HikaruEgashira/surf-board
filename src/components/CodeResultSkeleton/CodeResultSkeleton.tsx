@@ -1,19 +1,12 @@
 import { motion } from 'framer-motion';
 import { SkeletonIcon, SkeletonText } from '../Skeleton';
+import { skeletonFade } from '../../layers/animation';
 
 export default function CodeResultSkeleton() {
-  // 実際のCodeResultと同じ構造とパディングを使用
   return (
     <motion.div
       className="border-b border-nord-4 dark:border-nord-2 last:border-b-0"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{
-        duration: 0.3,
-        type: "spring",
-        stiffness: 100,
-        damping: 15
-      }}
+      {...skeletonFade}
     >
       <div className="py-3">
         {/* CodeHeaderと同じ構造 */}

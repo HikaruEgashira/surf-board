@@ -5,7 +5,7 @@ import { HeroContent } from './HeroContent';
 import { HeroFeatures } from './HeroFeatures';
 import CodeResultSkeleton from '../CodeResultSkeleton';
 import { cn } from '../../utils/cn';
-import { springTransition, fadeInUpAnimation } from '../../utils/animations';
+import { springTransition, fadeInUp, searchContainer } from '../../layers/animation';
 import { containerStyles } from '../../utils/styles';
 
 interface SearchHeroProps {
@@ -55,7 +55,7 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
           {!hasResults && !isLoading && (
             <motion.div
               className="flex-1 flex items-center py-3"
-              {...fadeInUpAnimation}
+              {...fadeInUp}
             >
               <HeroContent />
             </motion.div>
@@ -68,17 +68,7 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
             "w-full mx-auto py-2",
             hasResults || isLoading ? "max-w-full" : "max-w-xl"
           )}
-          initial={false}
-          animate={{
-            y: 0,
-            scale: 1,
-            transition: {
-              type: "spring",
-              stiffness: 200,
-              damping: 25,
-              mass: 1
-            }
-          }}
+          {...searchContainer}
         >
           <motion.div layout>
             <SearchInput
@@ -105,7 +95,7 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
         <AnimatePresence mode="wait">
           {!hasResults && !isLoading && (
             <motion.div
-              {...fadeInUpAnimation}
+              {...fadeInUp}
             >
               <HeroFeatures />
             </motion.div>

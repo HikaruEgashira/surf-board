@@ -3,7 +3,7 @@ import CodeResult from '../CodeResult';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import type { CodeSearchResult } from '../../types';
 import { useEffect, useRef } from 'react';
-import { fadeInAnimation } from '../../utils/animations';
+import { fadeIn } from '../../layers/animation';
 import { containerStyles } from '../../utils/styles';
 
 interface SearchResultsProps {
@@ -37,7 +37,7 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore }:
         key={getResultKey(result)}
         ref={index === results.length - 1 ? lastItemRef : undefined}
       >
-        <motion.div {...fadeInAnimation}>
+        <motion.div {...fadeIn}>
           <CodeResult result={result} />
         </motion.div>
       </div>
