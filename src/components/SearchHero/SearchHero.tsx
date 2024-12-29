@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useUrlState } from '../../hooks/useUrlState';
 import { SearchInput } from '../SearchBar/SearchInput';
 import { HeroContent } from './HeroContent';
 import { HeroFeatures } from './HeroFeatures';
@@ -15,11 +16,20 @@ interface SearchHeroProps {
 }
 
 export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHeroProps) {
-  const [inputValue, setInputValue] = useState('');
+  const [searchQuery, setSearchQuery] = useUrlState<string>('q', '');
+  const [inputValue, setInputValue] = useState(searchQuery);
+
+  useEffect(() => {
+    if (searchQuery) {
+      onSearch(searchQuery);
+    }
+  }, []);
 
   const handleSubmit = () => {
-    if (inputValue.trim()) {
-      onSearch(inputValue.trim());
+    const trimmedValue = inputValue.trim();
+    if (trimmedValue) {
+      setSearchQuery(trimmedValue);
+      onSearch(trimmedValue);
     }
   };
 
@@ -27,12 +37,14 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
     setInputValue(value);
     const trimmedValue = value.trim();
     if (trimmedValue.length >= 3 || trimmedValue === '') {
+      setSearchQuery(trimmedValue);
       onSearch(trimmedValue);
     }
   };
 
   const handleClear = () => {
     setInputValue('');
+    setSearchQuery('');
     onSearch('');
   };
 
