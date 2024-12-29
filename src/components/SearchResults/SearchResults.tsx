@@ -1,15 +1,25 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRef } from 'react';
 import CodeResult from '../CodeResult';
 import type { CodeSearchResult } from '../../types';
 import { fadeIn } from '../../animations';
 import { containerStyles } from '../../utils/styles';
+import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 
 interface SearchResultsProps {
   results: CodeSearchResult[];
   isLoading: boolean;
+  hasMore: boolean;
+  onLoadMore: () => void;
 }
 
-export default function SearchResults({ results }: SearchResultsProps) {
+export default function SearchResults({ results, isLoading, hasMore, onLoadMore }: SearchResultsProps) {
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useInfiniteScroll(onLoadMore, bottomRef, {
+    isLoading,
+    hasMore,
+  });
   const getResultKey = (result: CodeSearchResult) => {
     return `${result.sha}-${result.repository?.full_name}-${result.path}`;
   };
@@ -32,6 +42,13 @@ export default function SearchResults({ results }: SearchResultsProps) {
     <div className={containerStyles}>
       <AnimatePresence>
         {renderResults()}
+        {(isLoading || hasMore) && (
+          <div ref={bottomRef} className="py-4 text-center">
+            {isLoading && (
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto" />
+            )}
+          </div>
+        )}
       </AnimatePresence>
     </div>
   );
