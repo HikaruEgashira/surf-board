@@ -112,6 +112,7 @@ export function SearchInput({
         <button
           onClick={() => {
             onChange('');
+            lastSearchRef.current = '';
             handleBlur();
           }}
           className="absolute right-8 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
