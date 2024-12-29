@@ -1,9 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '../../utils/cn';
 import CodeResult from '../CodeResult';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import type { CodeSearchResult } from '../../types';
 import { useEffect, useRef } from 'react';
+import { fadeInAnimation } from '../../utils/animations';
+import { containerStyles } from '../../utils/styles';
 
 interface SearchResultsProps {
   results: CodeSearchResult[];
@@ -13,42 +14,14 @@ interface SearchResultsProps {
 }
 
 export default function SearchResults({ results, isLoading, hasMore, loadMore }: SearchResultsProps) {
-  const observerTargetRef = useRef<HTMLDivElement>(null);
   const lastItemRef = useInfiniteScroll(loadMore, { hasMore, isLoading });
 
-  // 結果が0件の場合や、最後のアイテムがビューポートに入らない場合のフォールバック
+  // 結果が0件の場合のフォールバック
   useEffect(() => {
     if (results.length === 0 && hasMore && !isLoading) {
       loadMore();
-      return;
-    }
-
-    // 結果が少なく、スクロールが発生しない場合の処理
-    if (observerTargetRef.current && hasMore && !isLoading) {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting) {
-            loadMore();
-          }
-        },
-        { threshold: 0.1 }
-      );
-
-      observer.observe(observerTargetRef.current);
-      return () => observer.disconnect();
     }
   }, [results.length, hasMore, isLoading, loadMore]);
-
-  console.log('SearchResults render:', {
-    resultsCount: results.length,
-    hasMore,
-    isLoading
-  });
-
-  const containerClasses = cn(
-    'divide-y divide-nord-4 dark:divide-nord-2 max-w-full',
-    'mx-auto w-full rounded-lg overflow-hidden'
-  );
 
   const getResultKey = (result: CodeSearchResult) => {
     return `${result.sha}-${result.repository?.full_name}-${result.path}`;
@@ -56,9 +29,7 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore }:
 
   const renderResults = () => {
     if (results.length === 0) {
-      return (
-        <div ref={observerTargetRef} className="h-20" />
-      );
+      return null;
     }
 
     return results.map((result, index) => (
@@ -66,12 +37,7 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore }:
         key={getResultKey(result)}
         ref={index === results.length - 1 ? lastItemRef : undefined}
       >
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0 }}
-        >
+        <motion.div {...fadeInAnimation}>
           <CodeResult result={result} />
         </motion.div>
       </div>
@@ -79,7 +45,7 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore }:
   };
 
   return (
-    <div className={containerClasses}>
+    <div className={containerStyles}>
       <AnimatePresence>
         {renderResults()}
       </AnimatePresence>

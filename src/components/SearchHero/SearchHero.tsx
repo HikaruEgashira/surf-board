@@ -5,12 +5,15 @@ import { HeroContent } from './HeroContent';
 import { HeroFeatures } from './HeroFeatures';
 import CodeResultSkeleton from '../CodeResultSkeleton';
 import { cn } from '../../utils/cn';
+import { springTransition, fadeInUpAnimation } from '../../utils/animations';
+import { containerStyles } from '../../utils/styles';
 
 interface SearchHeroProps {
   onSearch: (query: string) => void;
   isLoading: boolean;
   hasResults: boolean;
 }
+
 export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHeroProps) {
   const [inputValue, setInputValue] = useState('');
 
@@ -22,25 +25,15 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
 
   const handleChange = (value: string) => {
     setInputValue(value);
+    const trimmedValue = value.trim();
+    if (trimmedValue.length >= 3 || trimmedValue === '') {
+      onSearch(trimmedValue);
+    }
   };
 
   const handleClear = () => {
     setInputValue('');
     onSearch('');
-  };
-
-  const containerClasses = cn(
-    'divide-y divide-nord-4 dark:divide-nord-2 max-w-full',
-    'mx-auto w-full rounded-lg overflow-hidden'
-  );
-
-  const handleDebounceChange = (value: string) => {
-    handleChange(value);
-    if (value.trim().length >= 3) {
-      onSearch(value.trim());
-    } else if (value.trim() === '') {
-      onSearch('');
-    }
   };
 
   return (
@@ -51,35 +44,18 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
       )}
       initial={false}
       layout
-      transition={{
-        duration: 0.3,
-        type: "spring",
-        bounce: 0.1,
-        damping: 15
-      }}
+      transition={springTransition}
     >
       <motion.div
         className="flex flex-col items-center gap-2 flex-1 px-4"
         layout
-        transition={{
-          duration: 0.3,
-          type: "spring",
-          bounce: 0.1,
-          damping: 15
-        }}
+        transition={springTransition}
       >
         <AnimatePresence mode="wait">
           {!hasResults && !isLoading && (
             <motion.div
               className="flex-1 flex items-center py-3"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{
-                duration: 0.3,
-                type: "spring",
-                damping: 15
-              }}
+              {...fadeInUpAnimation}
             >
               <HeroContent />
             </motion.div>
@@ -107,7 +83,7 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
           <motion.div layout>
             <SearchInput
               value={inputValue}
-              onChange={handleDebounceChange}
+              onChange={handleChange}
               onSubmit={handleSubmit}
               onClear={handleClear}
               placeholder="Search code..."
@@ -118,7 +94,7 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
 
         <AnimatePresence>
           {isLoading && !hasResults && (
-            <div className={containerClasses}>
+            <div className={containerStyles}>
               {[...Array(10)].map((_, index) => (
                 <CodeResultSkeleton key={`skeleton-${index}`} />
               ))}
@@ -129,10 +105,7 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
         <AnimatePresence mode="wait">
           {!hasResults && !isLoading && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+              {...fadeInUpAnimation}
             >
               <HeroFeatures />
             </motion.div>
