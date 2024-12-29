@@ -6,6 +6,7 @@ interface SearchInputProps {
   onChange: (value: string) => void;
   onSubmit: () => void;
   onBlur?: () => void;
+  onClear?: () => void;
   placeholder?: string;
   className?: string;
   debounceDelay?: number;
@@ -16,6 +17,7 @@ export function SearchInput({
   onChange,
   onSubmit,
   onBlur,
+  onClear,
   placeholder = 'Search code...',
   className = '',
   debounceDelay = 500
@@ -111,9 +113,8 @@ export function SearchInput({
       {value && (
         <button
           onClick={() => {
-            onChange('');
+            onClear?.();
             lastSearchRef.current = '';
-            handleBlur();
           }}
           className="absolute right-8 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           aria-label="Clear search"

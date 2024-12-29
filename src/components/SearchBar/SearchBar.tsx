@@ -22,6 +22,11 @@ export default function SearchBar({ onSearch, isLoading, initialQuery = '' }: Se
     }
   };
 
+  const handleClear = () => {
+    setInputValue('');
+    onSearch('');
+  };
+
   return (
     <div className="w-full">
       <SearchInput
@@ -29,6 +34,7 @@ export default function SearchBar({ onSearch, isLoading, initialQuery = '' }: Se
         onChange={setInputValue}
         onSubmit={handleSubmit}
         onBlur={handleBlur}
+        onClear={handleClear}
         placeholder="Search code..."
         debounceDelay={500}
       />
