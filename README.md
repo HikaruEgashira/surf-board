@@ -40,6 +40,14 @@ Dive into GitHub's vast ocean of code
 
 ```
 src/
+├── animations/          # アニメーションレイヤー
+│   ├── constants/      # アニメーション定数
+│   │   └── spring.ts   # スプリングアニメーション設定
+│   ├── variants/       # アニメーションバリアント
+│   │   ├── container.ts # コンテナアニメーション
+│   │   ├── fade.ts     # フェードアニメーション
+│   │   └── skeleton.ts # スケルトンアニメーション
+│   └── index.ts        # 一元的なエクスポート
 ├── components/          # Reactコンポーネント
 │   ├── CodeResult/     # コードスニペット表示
 │   ├── SearchBar/      # 検索入力
@@ -55,6 +63,28 @@ src/
 ├── styles/            # スタイル定義
 ├── types/             # 型定義
 └── utils/             # ユーティリティ
+```
+
+### アニメーションレイヤー
+
+アニメーションレイヤーは、アプリケーション全体のアニメーションを一元管理します：
+
+- **constants/** - 再利用可能なアニメーション定数
+  - spring.ts: スプリングアニメーションの基本設定
+
+- **variants/** - Framer Motionのアニメーションバリアント
+  - container.ts: レイアウトアニメーション
+  - fade.ts: フェードイン/アウトアニメーション
+  - skeleton.ts: スケルトンローディングアニメーション
+
+使用例：
+```tsx
+import { fadeIn, springTransition } from '@/animations';
+
+// コンポーネントでの使用
+<motion.div {...fadeIn}>
+  <YourContent />
+</motion.div>
 ```
 
 ## Setup
