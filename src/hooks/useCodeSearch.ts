@@ -1,41 +1,14 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { CodeSearchResult, SearchResponse } from '../types';
 import { useGitHubToken } from '../context/GitHubTokenContext';
 import { useSearchSettings } from '../context/SearchSettingsContext';
 
 const PER_PAGE = 30;
 const MAX_ITEMS = 1000;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
+const MAX_STORED_RESULTS = 300; // メモリ管理のための制限
 
-// プログラミング言語の拡張子リスト
-const PROGRAMMING_EXTENSIONS = new Set([
-  // JavaScript/TypeScript
-  'js', 'jsx', 'ts', 'tsx', 'mjs', 'cjs',
-  // Python
-  'py', 'pyw', 'pyx',
-  // Ruby
-  'rb', 'rake', 'gemspec',
-  // PHP
-  'php', 'php3', 'php4', 'php5', 'phtml',
-  // Java
-  'java', 'class', 'jar',
-  // C/C++
-  'c', 'cpp', 'cc', 'cxx', 'h', 'hpp',
-  // C#
-  'cs', 'csx',
-  // Go
-  'go',
-  // Rust
-  'rs',
-  // Swift
-  'swift',
-  // Kotlin
-  'kt', 'kts',
-  // その他
-  'scala', 'hs', 'ex', 'lua', 'r', 'sh',
-  'sql', 'pl', 'pm', 'vue', 'svelte', 'dart', 'elm',
-]);
-
-// 非プログラミングファイルの拡張子
 const NON_PROGRAMMING_EXTENSIONS = new Set([
   'md', 'markdown', 'txt', 'doc', 'docx',
   'pdf', 'csv', 'json', 'xml', 'yaml', 'yml',
@@ -46,16 +19,13 @@ const NON_PROGRAMMING_EXTENSIONS = new Set([
 ]);
 
 const isProgrammingFile = (path: string): boolean => {
-  // 拡張子でチェック
   const filename = path.split('/').pop() || '';
   const extension = filename.split('.').pop()?.toLowerCase();
   if (!extension) return false;
-
-  // 明示的に非プログラミングファイルとして定義されている場合は除外
-  if (NON_PROGRAMMING_EXTENSIONS.has(extension)) return false;
-
-  return PROGRAMMING_EXTENSIONS.has(extension);
+  return !NON_PROGRAMMING_EXTENSIONS.has(extension);
 };
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export function useCodeSearch() {
   const { token } = useGitHubToken();
@@ -67,7 +37,12 @@ export function useCodeSearch() {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentQuery, setCurrentQuery] = useState('');
 
-  const searchCode = useCallback(async (query: string, page = 1) => {
+  // レース・コンディション対策用のアボートコントローラー
+  const abortControllerRef = useRef<AbortController | null>(null);
+  // 最新のリクエストIDを追跡
+  const requestIdRef = useRef<number>(0);
+
+  const searchCode = useCallback(async (query: string, page = 1, retryCount = 0) => {
     if (!token) {
       setError('GitHub token is required. Please set it in the settings.');
       return;
@@ -80,6 +55,15 @@ export function useCodeSearch() {
       return;
     }
 
+    // 前のリクエストをキャンセル
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // 新しいアボートコントローラーを作成
+    abortControllerRef.current = new AbortController();
+    const currentRequestId = ++requestIdRef.current;
+
     try {
       setIsLoading(true);
       setError(null);
@@ -90,22 +74,33 @@ export function useCodeSearch() {
       }
 
       const url = `https://api.github.com/search/code?q=${encodeURIComponent(query)}&per_page=${PER_PAGE}&page=${page}`;
-      console.log('Request URL:', url);
+
+      const headers = {
+        Accept: 'application/vnd.github.v3.text-match+json',
+        Authorization: `Bearer ${token}`,
+      };
 
       const response = await fetch(url, {
-        headers: {
-          Accept: 'application/vnd.github.v3.text-match+json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
+        signal: abortControllerRef.current.signal
       });
+
+      // リクエストがキャンセルされた場合は処理を中断
+      if (currentRequestId !== requestIdRef.current) {
+        return;
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('API Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData,
-        });
+
+        // API制限エラーの場合
+        if (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0') {
+          const resetTime = response.headers.get('x-ratelimit-reset');
+          const waitTime = resetTime ? parseInt(resetTime) * 1000 - Date.now() : 0;
+          throw new Error(`API rate limit exceeded. Please wait ${Math.ceil(waitTime / 1000)} seconds.`);
+        }
+
+        // その他のエラー
         throw new Error(
           errorData.message ||
           `Failed to fetch code results: ${response.status} ${response.statusText}`
@@ -113,11 +108,6 @@ export function useCodeSearch() {
       }
 
       const data: SearchResponse = await response.json();
-      console.log('Search results:', {
-        total_count: data.total_count,
-        items_count: data.items.length,
-      });
-
       const totalPages = Math.ceil(Math.min(data.total_count, MAX_ITEMS) / PER_PAGE);
 
       setResults(prev => {
@@ -128,24 +118,41 @@ export function useCodeSearch() {
           newResults = newResults.filter(item => isProgrammingFile(item.path));
         }
 
-        console.log('Updated results:', {
-          previousCount: prev.length,
-          newCount: newResults.length,
-          filtered: excludeNonProgramming,
-          filteredCount: newResults.length,
-        });
+        // メモリ管理のための結果制限
+        if (newResults.length > MAX_STORED_RESULTS) {
+          newResults = newResults.slice(-MAX_STORED_RESULTS);
+        }
+
+        // フィルタリング後に結果が追加されたかチェック
+        const hasNewResults = newResults.length > prev.length;
+        setHasMore(page < totalPages && hasNewResults);
 
         return newResults;
       });
 
-      setHasMore(page < totalPages);
       setCurrentPage(page);
+
     } catch (err) {
+      // アボートエラーは無視
+      if (err instanceof Error && err.name === 'AbortError') {
+        return;
+      }
+
       console.error('Search error:', err);
+
+      // リトライロジック
+      if (retryCount < MAX_RETRIES && err instanceof Error &&
+        (err.message.includes('network') || err.message.includes('timeout'))) {
+        await delay(RETRY_DELAY * Math.pow(2, retryCount));
+        return searchCode(query, page, retryCount + 1);
+      }
+
       setError(err instanceof Error ? err.message : 'An error occurred');
       setHasMore(false);
     } finally {
-      setIsLoading(false);
+      if (currentRequestId === requestIdRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [token, excludeNonProgramming]);
 
@@ -154,6 +161,15 @@ export function useCodeSearch() {
       searchCode(currentQuery, currentPage + 1);
     }
   }, [isLoading, hasMore, currentQuery, currentPage, searchCode]);
+
+  // コンポーネントのアンマウント時にリクエストをキャンセル
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   return {
     results,
