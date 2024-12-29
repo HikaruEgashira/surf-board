@@ -10,13 +10,13 @@ interface SearchResultsProps {
   results: CodeSearchResult[];
   isLoading: boolean;
   hasMore: boolean;
-  onLoadMore: () => void;
+  loadMore: () => void;
 }
 
-export default function SearchResults({ results, isLoading, hasMore, onLoadMore }: SearchResultsProps) {
+export default function SearchResults({ results, isLoading, hasMore, loadMore }: SearchResultsProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useInfiniteScroll(onLoadMore, bottomRef, {
+  useInfiniteScroll(loadMore, bottomRef, {
     isLoading,
     hasMore,
   });
