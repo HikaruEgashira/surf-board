@@ -68,7 +68,11 @@ bun install
 
 2. GitHubトークンの設定:
 - GitHubの[Personal Access Tokens](https://github.com/settings/tokens)ページで新しいトークンを生成
-- アプリケーションの設定画面でトークンを入力
+- 以下のいずれかの方法でトークンを設定:
+  a. 環境変数による設定（開発時）:
+     - `.env.local`ファイルをプロジェクトルートに作成
+     - `VITE_GITHUB_TOKEN=your_token_here`を追加
+  b. アプリケーションの設定画面でトークンを入力（実行時）
 
 3. 開発サーバーの起動:
 ```bash

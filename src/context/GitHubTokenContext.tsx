@@ -9,7 +9,12 @@ const GitHubTokenContext = createContext<GitHubTokenContextType | undefined>(und
 
 export function GitHubTokenProvider({ children }: { children: React.ReactNode }) {
     const [token, setToken] = useState<string | null>(() => {
-        // ローカルストレージからトークンを取得
+        // 環境変数からトークンを取得
+        const envToken = import.meta.env.VITE_GITHUB_TOKEN;
+        if (envToken) {
+            return envToken;
+        }
+        // 環境変数が存在しない場合はローカルストレージから取得
         const savedToken = localStorage.getItem('github_token');
         return savedToken;
     });
