@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { SkeletonIcon, SkeletonText } from '../Skeleton';
-import { skeletonFade } from '../../layers/animation';
+import { skeletonFade } from '../../animations';
 
 export default function CodeResultSkeleton() {
   return (

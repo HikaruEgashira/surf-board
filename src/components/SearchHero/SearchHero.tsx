@@ -5,7 +5,7 @@ import { HeroContent } from './HeroContent';
 import { HeroFeatures } from './HeroFeatures';
 import CodeResultSkeleton from '../CodeResultSkeleton';
 import { cn } from '../../utils/cn';
-import { springTransition, fadeInUp, searchContainer } from '../../layers/animation';
+import { springTransition, fadeInUp, searchContainer } from '../../animations';
 import { containerStyles } from '../../utils/styles';
 
 interface SearchHeroProps {

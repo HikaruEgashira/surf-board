@@ -3,7 +3,7 @@ import CodeResult from '../CodeResult';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import type { CodeSearchResult } from '../../types';
 import { useEffect, useRef } from 'react';
-import { fadeIn } from '../../layers/animation';
+import { fadeIn } from '../../animations';
 import { containerStyles } from '../../utils/styles';
 
 interface SearchResultsProps {
