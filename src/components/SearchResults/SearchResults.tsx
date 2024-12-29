@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils/cn';
 import CodeResult from '../CodeResult';
-import CodeResultSkeleton from '../CodeResultSkeleton';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import type { CodeSearchResult } from '../../types';
 import { useEffect, useRef } from 'react';
@@ -83,16 +82,6 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore }:
     <div className={containerClasses}>
       <AnimatePresence>
         {renderResults()}
-        {isLoading && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0 }}
-          >
-            <CodeResultSkeleton />
-          </motion.div>
-        )}
       </AnimatePresence>
     </div>
   );

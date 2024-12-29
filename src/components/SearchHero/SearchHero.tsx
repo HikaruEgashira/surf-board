@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import SearchBar from '../SearchBar';
+import { SearchInput } from '../SearchBar/SearchInput';
 import { HeroContent } from './HeroContent';
 import { HeroFeatures } from './HeroFeatures';
 import CodeResultSkeleton from '../CodeResultSkeleton';
@@ -79,7 +79,13 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
           }}
         >
           <motion.div layout>
-            <SearchBar onSearch={onSearch} isLoading={isLoading} />
+            <SearchInput
+              value=""
+              onChange={(value) => onSearch(value)}
+              onSubmit={() => { }}
+              placeholder="Search code..."
+              debounceDelay={500}
+            />
           </motion.div>
         </motion.div>
 
@@ -90,16 +96,6 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
                 <CodeResultSkeleton key={`skeleton-${index}`} />
               ))}
             </div>
-          )}
-          {isLoading && hasResults && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0 }}
-            >
-              <CodeResultSkeleton />
-            </motion.div>
           )}
         </AnimatePresence>
 
