@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 import { SearchInput } from '../SearchBar/SearchInput';
 import { HeroContent } from './HeroContent';
 import { HeroFeatures } from './HeroFeatures';
@@ -10,12 +11,37 @@ interface SearchHeroProps {
   isLoading: boolean;
   hasResults: boolean;
 }
-
 export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHeroProps) {
+  const [inputValue, setInputValue] = useState('');
+
+  const handleSubmit = () => {
+    if (inputValue.trim()) {
+      onSearch(inputValue.trim());
+    }
+  };
+
+  const handleChange = (value: string) => {
+    setInputValue(value);
+  };
+
+  const handleClear = () => {
+    setInputValue('');
+    onSearch('');
+  };
+
   const containerClasses = cn(
     'divide-y divide-nord-4 dark:divide-nord-2 max-w-full',
     'mx-auto w-full rounded-lg overflow-hidden'
   );
+
+  const handleDebounceChange = (value: string) => {
+    handleChange(value);
+    if (value.trim().length >= 3) {
+      onSearch(value.trim());
+    } else if (value.trim() === '') {
+      onSearch('');
+    }
+  };
 
   return (
     <motion.div
@@ -80,9 +106,10 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
         >
           <motion.div layout>
             <SearchInput
-              value=""
-              onChange={(value) => onSearch(value)}
-              onSubmit={() => { }}
+              value={inputValue}
+              onChange={handleDebounceChange}
+              onSubmit={handleSubmit}
+              onClear={handleClear}
               placeholder="Search code..."
               debounceDelay={500}
             />
