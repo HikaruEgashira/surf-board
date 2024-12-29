@@ -77,7 +77,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
                                 htmlFor="exclude-non-programming"
                                 className="text-sm font-medium text-gray-700 dark:text-gray-300"
                             >
-                                非プログラミング言語を除外
+                                Exclude non-programming languages
                             </label>
                             <button
                                 id="exclude-non-programming"
