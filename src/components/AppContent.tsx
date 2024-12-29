@@ -1,12 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import SearchHero from './SearchHero';
 import SearchResults from './SearchResults';
 import { useCodeSearch } from '../hooks/useCodeSearch';
-import { useUrlState } from '../hooks/useUrlState';
 import MainLayout from '../layouts/MainLayout';
 
 export function AppContent() {
-    const [query, setQuery] = useUrlState<string>('q', '');
+    const [query, setQuery] = useState('');
     const { results, isLoading, error, hasMore, searchCode, loadMore } = useCodeSearch();
     const isInitialMount = useRef(true);
 
