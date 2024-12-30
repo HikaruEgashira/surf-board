@@ -1,13 +1,12 @@
 import { motion } from 'framer-motion';
-import { useRef, memo, useEffect, useState } from 'react';
+import { memo, useRef } from 'react';
 import CodeResult from '../CodeResult';
 import CodeResultSkeleton from '../CodeResultSkeleton';
 import type { CodeSearchResult } from '../../types';
 import { fadeIn } from '../../animations';
 import { containerStyles } from '../../utils/styles';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
-import { usePullToRefresh, PULL_THRESHOLD } from '../../hooks/usePullToRefresh';
-import { useAutoLoad } from '../../hooks/useAutoLoad';
+import { useSearch } from '../../hooks/useSearch';
 
 interface SearchResultsProps {
   results: CodeSearchResult[];
@@ -54,27 +53,14 @@ const PullToRefresh = memo(({ distance }: { distance: number }) => (
 ));
 
 export default function SearchResults({ results, isLoading, hasMore, loadMore, isLastPage }: SearchResultsProps) {
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const {
     pullDistance,
-    isRefreshing,
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,
-  } = usePullToRefresh({
-    containerRef,
-    onRefresh: loadMore,
-    isLoading,
-  });
-
-  useAutoLoad({
     bottomRef,
-    hasMore,
-    isLoading,
-    resultsLength: results.length,
-    loadMore,
-  });
+    containerRef,
+  } = useSearch();
 
   useInfiniteScroll(loadMore, bottomRef, {
     isLoading,

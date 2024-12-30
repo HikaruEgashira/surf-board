@@ -1,10 +1,12 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, RefObject } from 'react';
 import { useCodeSearch } from './useCodeSearch';
 import type { CodeSearchResult } from '../types';
 
 interface UseSearchProps {
     onClose?: () => void;
 }
+
+export const PULL_THRESHOLD = 100;
 
 interface UseSearchReturn {
     // 検索状態
@@ -24,14 +26,28 @@ interface UseSearchReturn {
     // 無限スクロール
     loadMore: () => void;
 
-    // 入力参照
+    // プルトゥリフレッシュ
+    pullDistance: number;
+    isRefreshing: boolean;
+    handleTouchStart: (e: React.TouchEvent) => void;
+    handleTouchMove: (e: React.TouchEvent) => void;
+    handleTouchEnd: () => void;
+
+    // 参照
     inputRef: React.RefObject<HTMLInputElement>;
+    bottomRef: RefObject<HTMLDivElement>;
+    containerRef: RefObject<HTMLDivElement>;
 }
 
 export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => {
     // 検索状態の管理
     const [query, setQuery] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
+    const bottomRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [startY, setStartY] = useState<number | null>(null);
+    const [pullDistance, setPullDistance] = useState(0);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const {
         results,
         isLoading,
@@ -68,6 +84,7 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
     }, [query]);
 
     // スラッシュキーでの検索フォーカス
+    // スラッシュキーでの検索フォーカス
     useEffect(() => {
         const handleSlashKey = (e: KeyboardEvent) => {
             if (
@@ -85,7 +102,51 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
         return () => window.removeEventListener('keydown', handleSlashKey);
     }, []);
 
+    // 自動ロード機能
+    useEffect(() => {
+        if (hasMore && !isLoading && results.length > 0 && bottomRef.current) {
+            const container = bottomRef.current.parentElement;
+            if (container && container.clientHeight === container.scrollHeight) {
+                loadMore();
+            }
+        }
+    }, [hasMore, isLoading, results.length, loadMore]);
+
     const hasResults = query ? results.length > 0 : false;
+
+    // プルトゥリフレッシュのハンドラー
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (containerRef.current?.scrollTop === 0) {
+            setStartY(e.touches[0].clientY);
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (startY !== null && containerRef.current?.scrollTop === 0) {
+            const currentY = e.touches[0].clientY;
+            const distance = currentY - startY;
+            if (distance > 0) {
+                setPullDistance(distance);
+                e.preventDefault();
+            }
+        }
+    };
+
+    const handleTouchEnd = () => {
+        if (pullDistance >= PULL_THRESHOLD) {
+            setIsRefreshing(true);
+            loadMore();
+        }
+        setStartY(null);
+        setPullDistance(0);
+    };
+
+    // リフレッシュ状態のリセット
+    useEffect(() => {
+        if (!isLoading) {
+            setIsRefreshing(false);
+        }
+    }, [isLoading]);
 
     return {
         // 検索状態
@@ -105,7 +166,16 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
         // 無限スクロール
         loadMore,
 
-        // 入力参照
+        // プルトゥリフレッシュ
+        pullDistance,
+        isRefreshing,
+        handleTouchStart,
+        handleTouchMove,
+        handleTouchEnd,
+
+        // 参照
         inputRef,
+        bottomRef,
+        containerRef,
     };
 };

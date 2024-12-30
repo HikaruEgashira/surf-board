@@ -9,16 +9,7 @@ import { containerStyles } from '../../utils/styles';
 import { useSearch } from '../../hooks/useSearch';
 
 export default function SearchHero() {
-  const {
-    query,
-    isLoading,
-    hasResults,
-    handleChange,
-    handleSubmit,
-    handleClear,
-    handleBlur,
-    inputRef,
-  } = useSearch();
+  const { isLoading, hasResults } = useSearch();
 
   return (
     <motion.div
@@ -55,13 +46,7 @@ export default function SearchHero() {
           {...searchContainer}
         >
           <motion.div layout>
-            <SearchInput
-              value={query}
-              onChange={handleChange}
-              onSubmit={handleSubmit}
-              onClear={handleClear}
-              placeholder="Search code..."
-            />
+            <SearchInput placeholder="Search code..." />
           </motion.div>
         </motion.div>
 
