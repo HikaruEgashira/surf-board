@@ -2,11 +2,7 @@
 
   <img src="./screenshot.png" alt="Surf Board">
 
-**Modern GitHub Search Tool**
-
 </div>
-
-Surf Board is built with React, TypeScript, and Vite. It provide smooth code search experience with modern UI/UX features.
 
 ## Features
 
