@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { CodeSearchResult, SearchResponse } from '../types';
+import type { CodeSearchResult, SearchResponse, GitHubErrorResponse } from '../types/api';
+import { validateSearchQuery } from '../utils/validation';
 import { useGitHubToken } from '../context/GitHubTokenContext';
 import { useSearchSettings } from '../context/SearchSettingsContext';
 
@@ -94,7 +95,7 @@ export function useCodeSearch({
     lastSearchRef.current = '';
   }, []);
 
-  const handleSearchResponse = useCallback(async (
+const handleSearchResponse = useCallback(async (
     response: Response,
     query: string,
     page: number,
@@ -106,7 +107,10 @@ export function useCodeSearch({
 
     try {
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(() => ({ 
+          message: 'Unknown error',
+          documentation_url: null
+        } as GitHubErrorResponse));
 
         if (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0') {
           utils.handleRateLimitError(response.headers);
@@ -270,6 +274,17 @@ export function useCodeSearch({
     // 空の入力値の場合はリセット
     if (trimmedQuery === '') {
       handleSearchReset();
+      return;
+    }
+
+    // 入力値のバリデーション
+    const validationResult = validateSearchQuery({
+      query: trimmedQuery,
+      page: currentPage
+    });
+
+    if (!validationResult.isValid) {
+      setError(validationResult.errors.join(', '));
       return;
     }
 

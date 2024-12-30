@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { GitHubTokenManager } from '../utils/tokenManager';
+import { validateGitHubToken } from '../utils/validation';
+import type { GitHubErrorResponse } from '../types/api';
 
 interface UseGitHubTokenValidationProps {
     initialToken: string;
@@ -22,6 +25,7 @@ export const useGitHubTokenValidation = ({
     const [inputToken, setInputToken] = useState(initialToken);
     const [isValidating, setIsValidating] = useState(false);
     const [validationError, setValidationError] = useState<string | null>(null);
+    const tokenManagerRef = useRef<GitHubTokenManager>(new GitHubTokenManager());
 
     const validateToken = async (token: string): Promise<boolean> => {
         try {
@@ -33,10 +37,15 @@ export const useGitHubTokenValidation = ({
             });
 
             if (!response.ok) {
+                const errorData = await response.json().catch(() => ({
+                    message: 'Unknown error',
+                    documentation_url: null
+                } as GitHubErrorResponse));
+
                 if (response.status === 401) {
                     throw new Error('Invalid GitHub token. Please check your token and try again.');
                 }
-                throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+                throw new Error(errorData.message || `GitHub API error: ${response.status} ${response.statusText}`);
             }
 
             return true;
@@ -47,14 +56,9 @@ export const useGitHubTokenValidation = ({
     };
 
     const handleSave = async () => {
-        if (!inputToken) {
-            setValidationError('GitHub token is required');
-            return;
-        }
-
-        const tokenPattern = /^gh[ops]_[a-zA-Z0-9]{36,251}$/;
-        if (!tokenPattern.test(inputToken)) {
-            setValidationError('Invalid token format. Token should start with "gho_", "ghp_" or "ghs_"');
+        const validationResult = validateGitHubToken(inputToken);
+        if (!validationResult.isValid) {
+            setValidationError(validationResult.errors.join(', '));
             return;
         }
 
@@ -64,6 +68,7 @@ export const useGitHubTokenValidation = ({
         try {
             const isValid = await validateToken(inputToken);
             if (isValid) {
+                await tokenManagerRef.current.setToken(inputToken);
                 onSave(inputToken);
                 onClose();
             }
