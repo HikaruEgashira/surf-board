@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
-import { X, Moon, Sun } from 'lucide-react';
+import { X, Moon, Sun, AlertCircle } from 'lucide-react';
 import { useGitHubToken } from '../../context/GitHubTokenContext';
 import { useSearchSettings } from '../../context/SearchSettingsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useGitHubTokenValidation } from '../../hooks/useGitHubTokenValidation';
+import { GitHubTokenHelp } from './GitHubTokenHelp';
 
 export function Settings({ onClose }: { onClose: () => void }) {
     const { token, setToken } = useGitHubToken();
@@ -56,16 +57,25 @@ export function Settings({ onClose }: { onClose: () => void }) {
                 <div className="p-4 space-y-4">
                     <div className="space-y-4">
                         <div>
-                            <label
-                                htmlFor="github-token"
-                                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                            >
-                                GitHub Token
-                            </label>
+                            <div className="flex items-center justify-between mb-2">
+                                <label
+                                    htmlFor="github-token"
+                                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                >
+                                    GitHub Token
+                                </label>
+                                {validationError && (
+                                    <div className="flex items-center text-red-600 dark:text-red-400">
+                                        <AlertCircle className="w-4 h-4 mr-1" />
+                                        <span className="text-xs">Invalid token</span>
+                                    </div>
+                                )}
+                            </div>
                             <form
                                 onSubmit={(e) => { e.preventDefault(); handleSave(); }}
                                 role="form"
                                 aria-label="GitHub Token Settings"
+                                className="space-y-2"
                             >
                                 <input
                                     type="text"
@@ -77,28 +87,35 @@ export function Settings({ onClose }: { onClose: () => void }) {
                                     value="github-token"
                                     readOnly
                                 />
-                                <input
-                                    aria-label="GitHub Personal Access Token"
-                                    id="github-token"
-                                    type="password"
-                                    value={inputToken}
-                                    onChange={(e) => {
-                                        const value = e.target.value.trim();
-                                        setInputToken(value);
-                                    }}
-                                    placeholder="Enter your GitHub token"
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                                             shadow-sm placeholder-gray-400
-                                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                                             bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                    pattern="^gh[pso]_[a-zA-Z0-9]{36,251}$"
-                                    title="Please enter a valid GitHub token starting with 'gho_' or 'ghp_' or 'ghs_'"
-                                    autoComplete="new-password"
-                                    spellCheck="false"
-                                    autoCorrect="off"
-                                    autoCapitalize="off"
-                                    data-lpignore="true"
-                                />
+                                <div className="relative">
+                                    <input
+                                        aria-label="GitHub Personal Access Token"
+                                        id="github-token"
+                                        type="password"
+                                        value={inputToken}
+                                        onChange={(e) => {
+                                            const value = e.target.value.trim();
+                                            setInputToken(value);
+                                        }}
+                                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                                        className={`w-full px-3 py-2 border rounded-md shadow-sm 
+                                            placeholder-gray-400 bg-white dark:bg-gray-700 
+                                            text-gray-900 dark:text-gray-100
+                                            focus:outline-none focus:ring-2 focus:border-transparent
+                                            ${validationError 
+                                                ? 'border-red-300 dark:border-red-700 focus:ring-red-500' 
+                                                : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
+                                            }`}
+                                        pattern="^gh[pso]_[a-zA-Z0-9]{36,251}$"
+                                        title="Please enter a valid GitHub token starting with 'gho_' or 'ghp_' or 'ghs_'"
+                                        autoComplete="new-password"
+                                        spellCheck="false"
+                                        autoCorrect="off"
+                                        autoCapitalize="off"
+                                        data-lpignore="true"
+                                    />
+                                </div>
+                                <GitHubTokenHelp />
                             </form>
                         </div>
 
@@ -149,8 +166,12 @@ export function Settings({ onClose }: { onClose: () => void }) {
                         </div>
 
                         {validationError && (
-                            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-                                <p className="text-sm text-red-600 dark:text-red-400">{validationError}</p>
+                            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md flex items-start">
+                                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <p className="text-sm font-medium text-red-800 dark:text-red-200">Token Validation Failed</p>
+                                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{validationError}</p>
+                                </div>
                             </div>
                         )}
                         <button
