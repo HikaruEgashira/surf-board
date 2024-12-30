@@ -51,7 +51,7 @@ export default function SearchHero() {
         </motion.div>
 
         <AnimatePresence>
-          {isLoading && !hasResults && (
+          {(isLoading || isFocused) && !hasResults && (
             <div className={containerStyles}>
               {[...Array(10)].map((_, index) => (
                 <CodeResultSkeleton key={`skeleton-${index}`} />
