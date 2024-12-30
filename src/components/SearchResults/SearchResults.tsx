@@ -1,6 +1,5 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { useRef, memo, useCallback, useEffect } from 'react';
-import { Virtuoso } from 'react-virtuoso';
+import { motion } from 'framer-motion';
+import { useRef, memo, useEffect } from 'react';
 import CodeResult from '../CodeResult';
 import CodeResultSkeleton from '../CodeResultSkeleton';
 import type { CodeSearchResult } from '../../types';
@@ -43,10 +42,8 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore, i
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // 検索結果が少なく、スクロールが発生しない場合でも
-    // 追加データの読み込みをトリガーする
     if (hasMore && !isLoading && results.length > 0 && bottomRef.current) {
-      const container = document.querySelector('.virtuoso-scroller');
+      const container = bottomRef.current.parentElement;
       if (container && container.clientHeight === container.scrollHeight) {
         loadMore();
       }
@@ -56,18 +53,8 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore, i
   useInfiniteScroll(loadMore, bottomRef, {
     isLoading,
     hasMore,
-    threshold: 300, // より早めに次のデータを読み込む
+    threshold: 300,
   });
-
-  const getResultKey = useCallback((result: CodeSearchResult) => {
-    return `${result.sha}-${result.repository?.full_name}-${result.path}`;
-  }, []);
-
-  const renderItem = useCallback((_: number, result: CodeSearchResult) => (
-    <motion.div {...fadeIn}>
-      <MemoizedCodeResult result={result} />
-    </motion.div>
-  ), []);
 
   if (results.length === 0 && !isLoading) {
     return null;
@@ -75,25 +62,18 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore, i
 
   return (
     <div className={containerStyles}>
-      <AnimatePresence>
-        <Virtuoso
-          style={{ height: 'calc(100vh - 59px)' }}
-          data={results}
-          itemContent={(index, result) => renderItem(index, result)}
-          computeItemKey={(_, result) => getResultKey(result)}
-          components={{
-            Footer: () => (
-              <div ref={bottomRef}>
-                {isLoading && <LoadingSkeletons />}
-                {!isLoading && !isLastPage && <div className="py-4" />}
-                {isLastPage && <EndMessage />}
-              </div>
-            ),
-          }}
-          increaseViewportBy={500}
-          overscan={10}
-        />
-      </AnimatePresence>
+      <div style={{ height: 'calc(100vh - 59px)', overflowY: 'auto' }}>
+        {results.map(result => (
+          <motion.div key={`${result.sha}-${result.repository?.full_name}-${result.path}`} {...fadeIn}>
+            <MemoizedCodeResult result={result} />
+          </motion.div>
+        ))}
+        <div ref={bottomRef}>
+          {isLoading && <LoadingSkeletons />}
+          {!isLoading && !isLastPage && <div className="py-4" />}
+          {isLastPage && <EndMessage />}
+        </div>
+      </div>
     </div>
   );
 }
