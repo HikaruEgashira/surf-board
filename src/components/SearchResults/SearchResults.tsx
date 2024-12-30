@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion';
 import { memo } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import CodeResult from '../CodeResult';
 import CodeResultSkeleton from '../CodeResultSkeleton';
 import { fadeIn, fadeInUp } from '../../animations';
 import { containerStyles } from '../../utils/styles';
-import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { useSearchContext } from '../../context/SearchContext';
 
 const MemoizedCodeResult = memo(CodeResult);
@@ -54,38 +54,48 @@ export default function SearchResults() {
     containerRef,
   } = useSearchContext();
 
-  useInfiniteScroll(loadMore, bottomRef, {
-    isLoading,
-    hasMore,
-    threshold: 300,
-  });
-
   if (results.length === 0 && !isLoading) {
     return null;
   }
 
   const isLastPage = !hasMore && results.length > 0;
 
+  const Footer = () => (
+    <div ref={bottomRef}>
+      {isLoading && <LoadingSkeletons />}
+      {!isLoading && !isLastPage && <div className="py-4" />}
+      {isLastPage && <EndMessage />}
+    </div>
+  );
+
   return (
     <div className={containerStyles}>
       <div
         ref={containerRef}
-        style={{ height: 'calc(100vh - 59px)', overflowY: 'auto' }}
+        style={{ height: 'calc(100vh - 59px)' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         {pullDistance > 0 && <PullToRefresh distance={pullDistance} />}
-        {results.map(result => (
-          <motion.div key={`${result.sha}-${result.repository?.full_name}-${result.path}`} {...fadeIn}>
-            <MemoizedCodeResult result={result} />
-          </motion.div>
-        ))}
-        <div ref={bottomRef}>
-          {isLoading && <LoadingSkeletons />}
-          {!isLoading && !isLastPage && <div className="py-4" />}
-          {isLastPage && <EndMessage />}
-        </div>
+        <Virtuoso
+          style={{ height: '100%' }}
+          data={results}
+          endReached={() => {
+            if (hasMore && !isLoading) {
+              loadMore();
+            }
+          }}
+          overscan={5}
+          itemContent={(index, result) => (
+            <motion.div key={`${result.sha}-${result.repository?.full_name}-${result.path}`} {...fadeIn}>
+              <MemoizedCodeResult result={result} />
+            </motion.div>
+          )}
+          components={{
+            Footer
+          }}
+        />
       </div>
     </div>
   );

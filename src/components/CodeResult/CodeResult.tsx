@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { motion } from 'framer-motion';
 import type { CodeSearchResult } from '../../types';
 import { highlightCode } from '../../utils/syntax';
@@ -10,7 +10,7 @@ interface CodeResultProps {
   result: CodeSearchResult;
 }
 
-export default function CodeResult({ result }: CodeResultProps) {
+function CodeResult({ result }: CodeResultProps) {
   const codeRefs = useRef<(HTMLElement | null)[]>([]);
   const { theme } = useTheme();
 
@@ -42,3 +42,11 @@ export default function CodeResult({ result }: CodeResultProps) {
     </motion.div>
   );
 }
+
+export default memo(CodeResult, (prev, next) => {
+  return (
+    prev.result.sha === next.result.sha &&
+    prev.result.path === next.result.path &&
+    prev.result.repository?.full_name === next.result.repository?.full_name
+  );
+});
