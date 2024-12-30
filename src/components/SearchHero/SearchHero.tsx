@@ -26,10 +26,10 @@ export default function SearchHero() {
         layout
         transition={springTransition}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           {!hasResults && !isLoading && !isFocused && (
             <motion.div
-              className="flex-1 flex items-center py-3"
+              className="py-3"
               {...fadeInUp}
             >
               <HeroContent />
