@@ -1,37 +1,23 @@
-import { useRef } from 'react';
 import { Search, XCircle } from 'lucide-react';
-import { useSearchHotkey } from '../../hooks/useSearchHotkey';
-import { useSearchInput } from '../../hooks/useSearchInput';
+import { useSearch } from '../../hooks/useSearch';
 
 interface SearchInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  onSubmit: () => void;
-  onBlur?: () => void;
-  onClear?: () => void;
   placeholder?: string;
   className?: string;
 }
 
 export function SearchInput({
-  value,
-  onChange,
-  onSubmit,
-  onBlur,
-  onClear,
   placeholder = 'Search code...',
   className = '',
 }: SearchInputProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useSearchHotkey(inputRef);
-
-  const { handleKeyDown, handleChange, handleBlur } = useSearchInput({
-    value,
-    onChange,
-    onSubmit,
-    onBlur,
-  });
+  const {
+    query,
+    handleChange,
+    handleSubmit,
+    handleClear,
+    handleBlur,
+    inputRef,
+  } = useSearch();
 
   return (
     <div className={`relative flex-1 mx-auto group ${className}`}>
@@ -41,9 +27,14 @@ export function SearchInput({
       <input
         ref={inputRef}
         type="text"
-        value={value}
+        value={query}
         onChange={(e) => handleChange(e.target.value)}
-        onKeyDown={handleKeyDown}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit();
+          }
+        }}
         onBlur={handleBlur}
         className="block w-full pl-9 pr-16 py-2 bg-white dark:bg-gray-800/95
                   border border-gray-300 dark:border-gray-700 rounded-md
@@ -54,11 +45,9 @@ export function SearchInput({
                   transition-colors duration-150"
         placeholder={placeholder}
       />
-      {value && (
+      {query && (
         <button
-          onClick={() => {
-            onClear?.();
-          }}
+          onClick={handleClear}
           className="absolute right-8 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           aria-label="Clear search"
         >

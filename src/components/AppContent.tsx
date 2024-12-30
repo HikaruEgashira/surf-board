@@ -1,7 +1,7 @@
 import SearchHero from './SearchHero';
 import SearchResults from './SearchResults';
 import MainLayout from '../layouts/MainLayout';
-import { useSearchState } from '../hooks/useSearchState';
+import { useSearch } from '../hooks/useSearch';
 
 export function AppContent() {
     const {
@@ -11,17 +11,11 @@ export function AppContent() {
         error,
         hasMore,
         loadMore,
-        handleSearch,
-        hasResults,
-    } = useSearchState();
+    } = useSearch();
 
     return (
         <MainLayout error={error}>
-            <SearchHero
-                onSearch={handleSearch}
-                isLoading={isLoading}
-                hasResults={hasResults}
-            />
+            <SearchHero />
             {query && results.length > 0 && (
                 <SearchResults
                     results={results}

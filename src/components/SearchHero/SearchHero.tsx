@@ -6,21 +6,19 @@ import CodeResultSkeleton from '../CodeResultSkeleton';
 import { cn } from '../../utils/cn';
 import { springTransition, fadeInUp, searchContainer } from '../../animations';
 import { containerStyles } from '../../utils/styles';
-import { useSearchHero } from '../../hooks/useSearchHero';
+import { useSearch } from '../../hooks/useSearch';
 
-interface SearchHeroProps {
-  onSearch: (query: string) => void;
-  isLoading: boolean;
-  hasResults: boolean;
-}
-
-export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHeroProps) {
+export default function SearchHero() {
   const {
-    searchQuery,
+    query,
+    isLoading,
+    hasResults,
     handleChange,
     handleSubmit,
     handleClear,
-  } = useSearchHero({ onSearch });
+    handleBlur,
+    inputRef,
+  } = useSearch();
 
   return (
     <motion.div
@@ -58,7 +56,7 @@ export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHe
         >
           <motion.div layout>
             <SearchInput
-              value={searchQuery}
+              value={query}
               onChange={handleChange}
               onSubmit={handleSubmit}
               onClear={handleClear}
