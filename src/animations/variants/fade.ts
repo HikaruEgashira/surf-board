@@ -14,19 +14,10 @@ export const fadeInUp: Variants = {
     },
     exit: {
         opacity: 0,
-        y: -15,
         scale: 0.96,
         transition: {
-            duration: 0.3,
-            ease: [0.32, 0, 0.67, 0],
-            y: {
-                duration: 0.25,
-                ease: [0.33, 1, 0.68, 1]
-            },
-            scale: {
-                duration: 0.25,
-                ease: [0.32, 0, 0.67, 0]
-            }
+            duration: 0.15,
+            ease: [0.32, 0, 0.67, 0]
         }
     }
 };
