@@ -153,22 +153,18 @@ export function useCodeSearch({
       const newResults = processResults(results);
       setResults(newResults);
 
-      // 実際の残りの結果数を計算
-      const effectiveTotalCount = excludeNonProgramming
-        ? Math.floor(data.total_count * (newResults.length / (page * API_CONSTANTS.PER_PAGE)))
-        : data.total_count;
+      // 最大ページ数を計算
+      const maxPages = Math.min(
+        Math.ceil(data.total_count / API_CONSTANTS.PER_PAGE),
+        Math.ceil(API_CONSTANTS.MAX_ITEMS / API_CONSTANTS.PER_PAGE)
+      );
 
-      const effectiveTotalPages = Math.ceil(effectiveTotalCount / API_CONSTANTS.PER_PAGE);
-      const effectiveRemaining = effectiveTotalCount - (page * API_CONSTANTS.PER_PAGE);
-
-      const shouldContinue = effectiveRemaining > 0
-        && page < effectiveTotalPages
-        && newResults.length < API_CONSTANTS.MAX_ITEMS;
-
+      // 次のページがあるかどうかを判定
+      const shouldContinue = page < maxPages && newResults.length < API_CONSTANTS.MAX_ITEMS;
       setHasMore(shouldContinue);
 
       // フィルタリングされた結果が少ない場合、自動的に次のページを読み込む
-      if (excludeNonProgramming && shouldContinue && newResults.length < API_CONSTANTS.PER_PAGE * page / 2) {
+      if (excludeNonProgramming && shouldContinue && newResults.length < API_CONSTANTS.PER_PAGE) {
         queueMicrotask(() => {
           if (currentRequestId === requestIdRef.current) {
             executeSearch(query, page + 1);
