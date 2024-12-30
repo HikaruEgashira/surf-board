@@ -318,6 +318,10 @@ export function useCodeSearch({
     return !hasMore && results.length > 0 && currentQuery !== '';
   }, [hasMore, results.length, currentQuery]);
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   return {
     results,
     isLoading,
@@ -327,5 +331,6 @@ export function useCodeSearch({
     loadMore,
     totalResults,
     isLastPage: isLastPage(),
+    clearError,
   };
 }

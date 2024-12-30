@@ -19,6 +19,9 @@ interface SearchContextValue {
     handleBlur: () => void;
     handleFocus: () => void;
 
+    // エラー処理
+    clearError: () => void;
+
     // 無限スクロール
     loadMore: () => void;
 

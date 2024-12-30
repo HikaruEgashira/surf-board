@@ -156,6 +156,10 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
         }
     }, [isLoading]);
 
+    const clearError = useCallback(() => {
+        setError(null);
+    }, []);
+
     return {
         // 検索状態
         query,
@@ -172,6 +176,9 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
         handleClear,
         handleBlur,
         handleFocus,
+
+        // エラー処理
+        clearError,
 
         // 無限スクロール
         loadMore,
