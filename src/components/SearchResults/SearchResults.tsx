@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { memo } from 'react';
 import CodeResult from '../CodeResult';
 import CodeResultSkeleton from '../CodeResultSkeleton';
-import { fadeIn } from '../../animations';
+import { fadeIn, fadeInUp } from '../../animations';
 import { containerStyles } from '../../utils/styles';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { useSearchContext } from '../../context/SearchContext';
@@ -19,9 +19,7 @@ const LoadingSkeletons = memo(() => (
 
 const EndMessage = memo(() => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -20 }}
+    {...fadeInUp}
     className="text-center py-8 text-gray-500 dark:text-gray-400"
   >
     <div className="text-sm">
@@ -32,8 +30,7 @@ const EndMessage = memo(() => (
 
 const PullToRefresh = memo(({ distance }: { distance: number }) => (
   <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
+    {...fadeInUp}
     className="text-center py-4 text-gray-500 dark:text-gray-400"
     style={{ transform: `translateY(${Math.min(distance, 100)}px)` }}
   >

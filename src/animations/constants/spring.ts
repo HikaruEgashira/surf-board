@@ -6,5 +6,5 @@ export const springTransition: Transition = {
     damping: 20,
     stiffness: 300,
     mass: 0.8,
-    restDelta: 0.001
+    restDelta: 0.001,
 };

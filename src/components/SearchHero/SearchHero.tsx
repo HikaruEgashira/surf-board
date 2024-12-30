@@ -9,7 +9,7 @@ import { containerStyles } from '../../utils/styles';
 import { useSearchContext } from '../../context/SearchContext';
 
 export default function SearchHero() {
-  const { isLoading, hasResults } = useSearchContext();
+  const { isLoading, hasResults, isFocused } = useSearchContext();
 
   return (
     <motion.div
@@ -27,7 +27,7 @@ export default function SearchHero() {
         transition={springTransition}
       >
         <AnimatePresence mode="wait">
-          {!hasResults && !isLoading && (
+          {!hasResults && !isLoading && !isFocused && (
             <motion.div
               className="flex-1 flex items-center py-3"
               {...fadeInUp}
@@ -51,7 +51,7 @@ export default function SearchHero() {
         </motion.div>
 
         <AnimatePresence>
-          {isLoading && !hasResults && (
+          {(isLoading || isFocused) && !hasResults && (
             <div className={containerStyles}>
               {[...Array(10)].map((_, index) => (
                 <CodeResultSkeleton key={`skeleton-${index}`} />

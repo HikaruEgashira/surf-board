@@ -16,6 +16,7 @@ export function SearchInput({
     handleSubmit,
     handleClear,
     handleBlur,
+    handleFocus,
     inputRef,
   } = useSearchContext();
 
@@ -35,6 +36,7 @@ export function SearchInput({
             handleSubmit();
           }
         }}
+        onFocus={handleFocus}
         onBlur={handleBlur}
         className="block w-full pl-9 pr-16 py-2 bg-white dark:bg-gray-800/95
                   border border-gray-300 dark:border-gray-700 rounded-md

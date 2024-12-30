@@ -16,12 +16,14 @@ interface UseSearchReturn {
     error: string | null;
     hasMore: boolean;
     hasResults: boolean;
+    isFocused: boolean;
 
     // 入力処理
     handleChange: (value: string) => void;
     handleSubmit: () => void;
     handleClear: () => void;
     handleBlur: () => void;
+    handleFocus: () => void;
 
     // 無限スクロール
     loadMore: () => void;
@@ -42,6 +44,7 @@ interface UseSearchReturn {
 export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => {
     // 検索状態の管理
     const [query, setQuery] = useState('');
+    const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -77,10 +80,15 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
         onClose?.();
     }, [searchCode, onClose]);
 
+    const handleFocus = useCallback(() => {
+        setIsFocused(true);
+    }, []);
+
     const handleBlur = useCallback(() => {
         if (query.trim() === '') {
             setQuery('');
         }
+        setIsFocused(false);
     }, [query]);
 
     // スラッシュキーでの検索フォーカス
@@ -156,12 +164,14 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
         error,
         hasMore,
         hasResults,
+        isFocused,
 
         // 入力処理
         handleChange,
         handleSubmit,
         handleClear,
         handleBlur,
+        handleFocus,
 
         // 無限スクロール
         loadMore,

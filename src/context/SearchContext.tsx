@@ -10,12 +10,14 @@ interface SearchContextValue {
     error: string | null;
     hasMore: boolean;
     hasResults: boolean;
+    isFocused: boolean;
 
     // 入力処理
     handleChange: (value: string) => void;
     handleSubmit: () => void;
     handleClear: () => void;
     handleBlur: () => void;
+    handleFocus: () => void;
 
     // 無限スクロール
     loadMore: () => void;
