@@ -291,10 +291,17 @@ export function useCodeSearch({
   }, [debounceDelay, minQueryLength, handleSearchReset, executeSearch]);
 
   const loadMore = useCallback(() => {
-    if (!isLoading && hasMore && currentQuery) {
-      executeSearch(currentQuery, currentPage + 1);
+    if (!isLoading && currentQuery && (hasMore || error)) {
+      if (error) {
+        // エラー時は現在のページを再試行
+        setError(null);
+        executeSearch(currentQuery, currentPage);
+      } else {
+        // 通常の無限スクロール
+        executeSearch(currentQuery, currentPage + 1);
+      }
     }
-  }, [isLoading, hasMore, currentQuery, currentPage, executeSearch]);
+  }, [isLoading, hasMore, currentQuery, currentPage, executeSearch, error]);
 
   useEffect(() => {
     return () => {

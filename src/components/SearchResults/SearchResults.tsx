@@ -1,11 +1,13 @@
 import { motion } from 'framer-motion';
-import { useRef, memo, useEffect } from 'react';
+import { useRef, memo, useEffect, useState } from 'react';
 import CodeResult from '../CodeResult';
 import CodeResultSkeleton from '../CodeResultSkeleton';
 import type { CodeSearchResult } from '../../types';
 import { fadeIn } from '../../animations';
 import { containerStyles } from '../../utils/styles';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
+
+const PULL_THRESHOLD = 100; // プルトゥリフレッシュのしきい値（ピクセル）
 
 interface SearchResultsProps {
   results: CodeSearchResult[];
@@ -38,8 +40,25 @@ const EndMessage = memo(() => (
   </motion.div>
 ));
 
+const PullToRefresh = memo(({ distance }: { distance: number }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    className="text-center py-4 text-gray-500 dark:text-gray-400"
+    style={{ transform: `translateY(${Math.min(distance, PULL_THRESHOLD)}px)` }}
+  >
+    <div className="text-sm">
+      {distance >= PULL_THRESHOLD ? '更新するには離してください' : '引っ張って更新'}
+    </div>
+  </motion.div>
+));
+
 export default function SearchResults({ results, isLoading, hasMore, loadMore, isLastPage }: SearchResultsProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [startY, setStartY] = useState<number | null>(null);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (hasMore && !isLoading && results.length > 0 && bottomRef.current) {
@@ -56,13 +75,52 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore, i
     threshold: 300,
   });
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (containerRef.current?.scrollTop === 0) {
+      setStartY(e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (startY !== null && containerRef.current?.scrollTop === 0) {
+      const currentY = e.touches[0].clientY;
+      const distance = currentY - startY;
+      if (distance > 0) {
+        setPullDistance(distance);
+        e.preventDefault();
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullDistance >= PULL_THRESHOLD) {
+      setIsRefreshing(true);
+      loadMore();
+    }
+    setStartY(null);
+    setPullDistance(0);
+  };
+
+  useEffect(() => {
+    if (!isLoading) {
+      setIsRefreshing(false);
+    }
+  }, [isLoading]);
+
   if (results.length === 0 && !isLoading) {
     return null;
   }
 
   return (
     <div className={containerStyles}>
-      <div style={{ height: 'calc(100vh - 59px)', overflowY: 'auto' }}>
+      <div
+        ref={containerRef}
+        style={{ height: 'calc(100vh - 59px)', overflowY: 'auto' }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {pullDistance > 0 && <PullToRefresh distance={pullDistance} />}
         {results.map(result => (
           <motion.div key={`${result.sha}-${result.repository?.full_name}-${result.path}`} {...fadeIn}>
             <MemoizedCodeResult result={result} />
