@@ -42,8 +42,18 @@ interface UseCodeSearchOptions {
   minQueryLength?: number;
 }
 
+// キャッシュの型定義
+interface CacheEntry {
+  results: CodeSearchResult[];
+  totalResults: number;
+  timestamp: number;
+}
+
+const searchCache = new Map<string, CacheEntry>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5分
+
 export function useCodeSearch({
-  debounceDelay = 500,
+  debounceDelay = 300,
   minQueryLength = 3
 }: UseCodeSearchOptions = {}) {
   const { token } = useGitHubToken();
@@ -62,6 +72,19 @@ export function useCodeSearch({
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const lastSearchRef = useRef<string>('');
 
+  // キャッシュチェック関数
+  const checkCache = useCallback((query: string): CacheEntry | null => {
+    const cached = searchCache.get(query);
+    if (!cached) return null;
+
+    const now = Date.now();
+    if (now - cached.timestamp > CACHE_DURATION) {
+      searchCache.delete(query);
+      return null;
+    }
+    return cached;
+  }, []);
+
   const handleSearchReset = useCallback(() => {
     setResults([]);
     setHasMore(false);
@@ -76,9 +99,9 @@ export function useCodeSearch({
     query: string,
     page: number,
     currentRequestId: number
-  ) => {
+  ): Promise<SearchResponse | null> => {
     if (currentRequestId !== requestIdRef.current) {
-      return;
+      return null;
     }
 
     try {
@@ -98,7 +121,7 @@ export function useCodeSearch({
       const data: SearchResponse = await response.json();
 
       if (currentRequestId !== requestIdRef.current) {
-        return;
+        return null;
       }
 
       const totalPages = Math.ceil(data.total_count / API_CONSTANTS.PER_PAGE);
@@ -107,7 +130,7 @@ export function useCodeSearch({
         setTotalResults(data.total_count);
       }
 
-      setResults(prev => {
+      const processResults = (prev: CodeSearchResult[]) => {
         if (currentRequestId !== requestIdRef.current) {
           return prev;
         }
@@ -126,34 +149,50 @@ export function useCodeSearch({
           newResults = newResults.slice(-API_CONSTANTS.MAX_STORED_RESULTS);
         }
 
-        const remainingResults = totalResults - (page * API_CONSTANTS.PER_PAGE);
-        const remainingFilteredResults = remainingResults - filteredCountRef.current;
-
-        if (excludeNonProgramming && newResults.length === prev.length && page < totalPages) {
-          setTimeout(() => {
-            if (currentRequestId === requestIdRef.current) {
-              executeSearch(query, page + 1);
-            }
-          }, 0);
-        }
-
-        setHasMore(remainingFilteredResults > 0 && page < totalPages);
-
         return newResults;
-      });
+      };
+
+      const newResults = processResults(results);
+      setResults(newResults);
+
+      const remainingResults = data.total_count - (page * API_CONSTANTS.PER_PAGE);
+      const remainingFilteredResults = remainingResults - filteredCountRef.current;
+      setHasMore(remainingFilteredResults > 0 && page < totalPages);
+
+      if (excludeNonProgramming && newResults.length === results.length && page < totalPages) {
+        queueMicrotask(() => {
+          if (currentRequestId === requestIdRef.current) {
+            executeSearch(query, page + 1);
+          }
+        });
+      }
 
       setCurrentPage(page);
+      return data;
     } catch (error) {
       if (currentRequestId === requestIdRef.current) {
         throw error;
       }
+      return null;
     }
-  }, [excludeNonProgramming, totalResults]);
+  }, [excludeNonProgramming, results]);
 
   const executeSearch = useCallback(async (query: string, page = 1, retryCount = 0) => {
     if (!token) {
       setError('GitHub token is required. Please set it in the settings.');
       return;
+    }
+
+    // ページ1の場合、キャッシュをチェック
+    if (page === 1) {
+      const cached = checkCache(query);
+      if (cached) {
+        setResults(cached.results);
+        setTotalResults(cached.totalResults);
+        setCurrentQuery(query);
+        setHasMore(cached.results.length < cached.totalResults);
+        return;
+      }
     }
 
     if (abortControllerRef.current) {
@@ -173,13 +212,26 @@ export function useCodeSearch({
         filteredCountRef.current = 0;
       }
 
-      const url = `https://api.github.com/search/code?q=${encodeURIComponent(query)}&per_page=${API_CONSTANTS.PER_PAGE}&page=${page}`;
-      const response = await fetch(url, {
+      const url = new URL('https://api.github.com/search/code');
+      url.searchParams.set('q', query);
+      url.searchParams.set('per_page', API_CONSTANTS.PER_PAGE.toString());
+      url.searchParams.set('page', page.toString());
+
+      const response = await fetch(url.toString(), {
         headers: utils.createGitHubHeaders(token),
         signal: abortControllerRef.current.signal
       });
 
-      await handleSearchResponse(response, query, page, currentRequestId);
+      const data = await handleSearchResponse(response, query, page, currentRequestId);
+
+      // 結果をキャッシュに保存（ページ1の場合のみ）
+      if (page === 1 && data) {
+        searchCache.set(query, {
+          results: data.items,
+          totalResults: data.total_count,
+          timestamp: Date.now()
+        });
+      }
 
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
@@ -199,7 +251,7 @@ export function useCodeSearch({
         setIsLoading(false);
       }
     }
-  }, [token, handleSearchResponse]);
+  }, [token, handleSearchResponse, checkCache]);
 
   const searchCode = useCallback((query: string) => {
     const trimmedQuery = query.trim();

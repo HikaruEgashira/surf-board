@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, memo, useCallback, useEffect } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import CodeResult from '../CodeResult';
 import CodeResultSkeleton from '../CodeResultSkeleton';
 import type { CodeSearchResult } from '../../types';
@@ -15,62 +16,83 @@ interface SearchResultsProps {
   isLastPage?: boolean;
 }
 
+const MemoizedCodeResult = memo(CodeResult);
+
+const LoadingSkeletons = memo(() => (
+  <>
+    <CodeResultSkeleton />
+    <CodeResultSkeleton />
+    <CodeResultSkeleton />
+  </>
+));
+
+const EndMessage = memo(() => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    className="text-center py-8 text-gray-500 dark:text-gray-400"
+  >
+    <div className="text-sm">
+      検索結果の最後に到達しました
+    </div>
+  </motion.div>
+));
+
 export default function SearchResults({ results, isLoading, hasMore, loadMore, isLastPage }: SearchResultsProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // 検索結果が少なく、スクロールが発生しない場合でも
+    // 追加データの読み込みをトリガーする
+    if (hasMore && !isLoading && results.length > 0 && bottomRef.current) {
+      const container = document.querySelector('.virtuoso-scroller');
+      if (container && container.clientHeight === container.scrollHeight) {
+        loadMore();
+      }
+    }
+  }, [hasMore, isLoading, results.length, loadMore]);
 
   useInfiniteScroll(loadMore, bottomRef, {
     isLoading,
     hasMore,
+    threshold: 300, // より早めに次のデータを読み込む
   });
 
-  const getResultKey = (result: CodeSearchResult) => {
+  const getResultKey = useCallback((result: CodeSearchResult) => {
     return `${result.sha}-${result.repository?.full_name}-${result.path}`;
-  };
+  }, []);
 
-  const renderResults = () => {
-    if (results.length === 0 && !isLoading) {
-      return null;
-    }
+  const renderItem = useCallback((_: number, result: CodeSearchResult) => (
+    <motion.div {...fadeIn}>
+      <MemoizedCodeResult result={result} />
+    </motion.div>
+  ), []);
 
-    return (
-      <>
-        {results.map((result) => (
-          <div key={getResultKey(result)}>
-            <motion.div {...fadeIn}>
-              <CodeResult result={result} />
-            </motion.div>
-          </div>
-        ))}
-        {isLoading && (
-          <>
-            <CodeResultSkeleton />
-            <CodeResultSkeleton />
-            <CodeResultSkeleton />
-          </>
-        )}
-      </>
-    );
-  };
+  if (results.length === 0 && !isLoading) {
+    return null;
+  }
 
   return (
     <div className={containerStyles}>
       <AnimatePresence>
-        {renderResults()}
-        {hasMore && !isLoading && (
-          <div ref={bottomRef} className="py-4" />
-        )}
-        {isLastPage && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="text-center py-8 text-gray-500 dark:text-gray-400"
-          >
-            <div className="text-sm">
-              検索結果の最後に到達しました
-            </div>
-          </motion.div>
-        )}
+        <Virtuoso
+          style={{ height: 'calc(100vh - 59px)' }}
+          data={results}
+          itemContent={(index, result) => renderItem(index, result)}
+          computeItemKey={(_, result) => getResultKey(result)}
+          components={{
+            Footer: () => (
+              <>
+                {isLoading && <LoadingSkeletons />}
+                {hasMore && !isLoading && <div ref={bottomRef} className="py-4" />}
+                {isLastPage && <EndMessage />}
+              </>
+            ),
+          }}
+          increaseViewportBy={200}
+          overscan={5}
+        />
       </AnimatePresence>
     </div>
   );
