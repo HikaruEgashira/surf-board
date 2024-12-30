@@ -6,10 +6,10 @@ import CodeResultSkeleton from '../CodeResultSkeleton';
 import { cn } from '../../utils/cn';
 import { springTransition, fadeInUp, searchContainer } from '../../animations';
 import { containerStyles } from '../../utils/styles';
-import { useSearch } from '../../hooks/useSearch';
+import { useSearchContext } from '../../context/SearchContext';
 
 export default function SearchHero() {
-  const { isLoading, hasResults } = useSearch();
+  const { isLoading, hasResults } = useSearchContext();
 
   return (
     <motion.div

@@ -1,20 +1,11 @@
 import { motion } from 'framer-motion';
-import { memo, useRef } from 'react';
+import { memo } from 'react';
 import CodeResult from '../CodeResult';
 import CodeResultSkeleton from '../CodeResultSkeleton';
-import type { CodeSearchResult } from '../../types';
 import { fadeIn } from '../../animations';
 import { containerStyles } from '../../utils/styles';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
-import { useSearch } from '../../hooks/useSearch';
-
-interface SearchResultsProps {
-  results: CodeSearchResult[];
-  isLoading: boolean;
-  hasMore: boolean;
-  loadMore: () => void;
-  isLastPage?: boolean;
-}
+import { useSearchContext } from '../../context/SearchContext';
 
 const MemoizedCodeResult = memo(CodeResult);
 
@@ -44,23 +35,27 @@ const PullToRefresh = memo(({ distance }: { distance: number }) => (
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     className="text-center py-4 text-gray-500 dark:text-gray-400"
-    style={{ transform: `translateY(${Math.min(distance, PULL_THRESHOLD)}px)` }}
+    style={{ transform: `translateY(${Math.min(distance, 100)}px)` }}
   >
     <div className="text-sm">
-      {distance >= PULL_THRESHOLD ? '更新するには離してください' : '引っ張って更新'}
+      {distance >= 100 ? '更新するには離してください' : '引っ張って更新'}
     </div>
   </motion.div>
 ));
 
-export default function SearchResults({ results, isLoading, hasMore, loadMore, isLastPage }: SearchResultsProps) {
+export default function SearchResults() {
   const {
+    results,
+    isLoading,
+    hasMore,
+    loadMore,
     pullDistance,
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,
     bottomRef,
     containerRef,
-  } = useSearch();
+  } = useSearchContext();
 
   useInfiniteScroll(loadMore, bottomRef, {
     isLoading,
@@ -71,6 +66,8 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore, i
   if (results.length === 0 && !isLoading) {
     return null;
   }
+
+  const isLastPage = !hasMore && results.length > 0;
 
   return (
     <div className={containerStyles}>

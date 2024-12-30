@@ -1,29 +1,30 @@
 import SearchHero from './SearchHero';
 import SearchResults from './SearchResults';
 import MainLayout from '../layouts/MainLayout';
-import { useSearch } from '../hooks/useSearch';
+import { SearchProvider, useSearchContext } from '../context/SearchContext';
 
-export function AppContent() {
+function AppContent() {
     const {
         query,
         results,
         isLoading,
         error,
-        hasMore,
-        loadMore,
-    } = useSearch();
+    } = useSearchContext();
 
     return (
         <MainLayout error={error}>
             <SearchHero />
             {query && results.length > 0 && (
-                <SearchResults
-                    results={results}
-                    isLoading={isLoading}
-                    hasMore={hasMore}
-                    loadMore={loadMore}
-                />
+                <SearchResults />
             )}
         </MainLayout>
+    );
+}
+
+export function AppContentWithProvider() {
+    return (
+        <SearchProvider>
+            <AppContent />
+        </SearchProvider>
     );
 }

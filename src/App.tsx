@@ -1,5 +1,5 @@
 import RootLayout from './layouts/RootLayout';
-import { AppContent } from './components/AppContent';
+import { AppContentWithProvider } from './components/AppContent';
 import { SearchSettingsProvider } from './context/SearchSettingsContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './styles/nord-theme.css';
@@ -10,7 +10,7 @@ export default function App() {
     <ThemeProvider>
       <SearchSettingsProvider>
         <RootLayout>
-          <AppContent />
+          <AppContentWithProvider />
         </RootLayout>
       </SearchSettingsProvider>
     </ThemeProvider>

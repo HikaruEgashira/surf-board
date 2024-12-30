@@ -1,5 +1,5 @@
 import { Search, XCircle } from 'lucide-react';
-import { useSearch } from '../../hooks/useSearch';
+import { useSearchContext } from '../../context/SearchContext';
 
 interface SearchInputProps {
   placeholder?: string;
@@ -17,7 +17,7 @@ export function SearchInput({
     handleClear,
     handleBlur,
     inputRef,
-  } = useSearch();
+  } = useSearchContext();
 
   return (
     <div className={`relative flex-1 mx-auto group ${className}`}>
