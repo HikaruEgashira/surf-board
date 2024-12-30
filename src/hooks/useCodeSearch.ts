@@ -70,6 +70,7 @@ export function useCodeSearch({
   const requestIdRef = useRef<number>(0);
   const filteredCountRef = useRef<number>(0);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const lastSearchRef = useRef<string>('');
 
   // キャッシュチェック関数
@@ -313,6 +314,24 @@ export function useCodeSearch({
       }
     };
   }, []);
+
+  // エラーメッセージを5秒後に自動的にクリア
+  useEffect(() => {
+    if (error) {
+      if (errorTimerRef.current) {
+        clearTimeout(errorTimerRef.current);
+      }
+      errorTimerRef.current = setTimeout(() => {
+        setError(null);
+      }, 5000);
+
+      return () => {
+        if (errorTimerRef.current) {
+          clearTimeout(errorTimerRef.current);
+        }
+      };
+    }
+  }, [error]);
 
   const isLastPage = useCallback(() => {
     return !hasMore && results.length > 0 && currentQuery !== '';
