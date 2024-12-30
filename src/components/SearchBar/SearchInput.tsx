@@ -1,5 +1,7 @@
-import { useEffect, useRef, useCallback, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useRef } from 'react';
 import { Search, XCircle } from 'lucide-react';
+import { useSearchHotkey } from '../../hooks/useSearchHotkey';
+import { useSearchInput } from '../../hooks/useSearchInput';
 
 interface SearchInputProps {
   value: string;
@@ -22,38 +24,14 @@ export function SearchInput({
 }: SearchInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      onSubmit();
-    }
-  };
+  useSearchHotkey(inputRef);
 
-  const handleBlur = useCallback(() => {
-    if (value.trim() === '') {
-      onChange('');
-    }
-    onBlur?.();
-  }, [value, onChange, onBlur]);
-
-  // 入力値の変更を即座に通知
-  const handleChange = (newValue: string) => {
-    onChange(newValue);
-    onSubmit();
-  };
-
-  // スラッシュキーでの検索フォーカス
-  useEffect(() => {
-    const handleSlashKey = (e: KeyboardEvent) => {
-      if (e.key === '/' && !e.metaKey && !e.ctrlKey && document.activeElement !== inputRef.current) {
-        e.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleSlashKey);
-    return () => window.removeEventListener('keydown', handleSlashKey);
-  }, []);
+  const { handleKeyDown, handleChange, handleBlur } = useSearchInput({
+    value,
+    onChange,
+    onSubmit,
+    onBlur,
+  });
 
   return (
     <div className={`relative flex-1 mx-auto group ${className}`}>

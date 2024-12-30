@@ -218,7 +218,7 @@ export function useCodeSearch({
       }
 
       const url = new URL('https://api.github.com/search/code');
-      url.searchParams.set('q', query);
+      url.searchParams.set('q', `${query} NOT is:fork`);
       url.searchParams.set('per_page', API_CONSTANTS.PER_PAGE.toString());
       url.searchParams.set('page', page.toString());
 

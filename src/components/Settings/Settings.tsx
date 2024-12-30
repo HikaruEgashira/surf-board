@@ -1,66 +1,26 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Moon, Sun } from 'lucide-react';
 import { useGitHubToken } from '../../context/GitHubTokenContext';
 import { useSearchSettings } from '../../context/SearchSettingsContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useGitHubTokenValidation } from '../../hooks/useGitHubTokenValidation';
 
 export function Settings({ onClose }: { onClose: () => void }) {
     const { token, setToken } = useGitHubToken();
     const { excludeNonProgramming, setExcludeNonProgramming } = useSearchSettings();
     const { theme, setTheme } = useTheme();
-    const [inputToken, setInputToken] = useState(token || '');
-    const [isValidating, setIsValidating] = useState(false);
-    const [validationError, setValidationError] = useState<string | null>(null);
 
-    const validateToken = async (token: string): Promise<boolean> => {
-        try {
-            const response = await fetch('https://api.github.com/user', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: 'application/vnd.github.v3+json',
-                },
-            });
-
-            if (!response.ok) {
-                if (response.status === 401) {
-                    throw new Error('Invalid GitHub token. Please check your token and try again.');
-                }
-                throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
-            }
-
-            return true;
-        } catch (error) {
-            setValidationError(error instanceof Error ? error.message : 'Failed to validate token');
-            return false;
-        }
-    };
-
-    const handleSave = async () => {
-        if (!inputToken) {
-            setValidationError('GitHub token is required');
-            return;
-        }
-
-        const tokenPattern = /^gh[ps]_[a-zA-Z0-9]{36,251}$/;
-        if (!tokenPattern.test(inputToken)) {
-            setValidationError('Invalid token format. Token should start with "ghp_" or "ghs_"');
-            return;
-        }
-
-        setIsValidating(true);
-        setValidationError(null);
-
-        try {
-            const isValid = await validateToken(inputToken);
-            if (isValid) {
-                setToken(inputToken);
-                onClose();
-            }
-        } finally {
-            setIsValidating(false);
-        }
-    };
+    const {
+        inputToken,
+        setInputToken,
+        isValidating,
+        validationError,
+        handleSave,
+    } = useGitHubTokenValidation({
+        initialToken: token || '',
+        onSave: setToken,
+        onClose,
+    });
 
     return (
         <>

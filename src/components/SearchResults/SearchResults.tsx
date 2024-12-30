@@ -6,8 +6,8 @@ import type { CodeSearchResult } from '../../types';
 import { fadeIn } from '../../animations';
 import { containerStyles } from '../../utils/styles';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
-
-const PULL_THRESHOLD = 100; // プルトゥリフレッシュのしきい値（ピクセル）
+import { usePullToRefresh, PULL_THRESHOLD } from '../../hooks/usePullToRefresh';
+import { useAutoLoad } from '../../hooks/useAutoLoad';
 
 interface SearchResultsProps {
   results: CodeSearchResult[];
@@ -56,56 +56,31 @@ const PullToRefresh = memo(({ distance }: { distance: number }) => (
 export default function SearchResults({ results, isLoading, hasMore, loadMore, isLastPage }: SearchResultsProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [startY, setStartY] = useState<number | null>(null);
-  const [pullDistance, setPullDistance] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const {
+    pullDistance,
+    isRefreshing,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+  } = usePullToRefresh({
+    containerRef,
+    onRefresh: loadMore,
+    isLoading,
+  });
 
-  useEffect(() => {
-    if (hasMore && !isLoading && results.length > 0 && bottomRef.current) {
-      const container = bottomRef.current.parentElement;
-      if (container && container.clientHeight === container.scrollHeight) {
-        loadMore();
-      }
-    }
-  }, [hasMore, isLoading, results.length, loadMore]);
+  useAutoLoad({
+    bottomRef,
+    hasMore,
+    isLoading,
+    resultsLength: results.length,
+    loadMore,
+  });
 
   useInfiniteScroll(loadMore, bottomRef, {
     isLoading,
     hasMore,
     threshold: 300,
   });
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (containerRef.current?.scrollTop === 0) {
-      setStartY(e.touches[0].clientY);
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (startY !== null && containerRef.current?.scrollTop === 0) {
-      const currentY = e.touches[0].clientY;
-      const distance = currentY - startY;
-      if (distance > 0) {
-        setPullDistance(distance);
-        e.preventDefault();
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (pullDistance >= PULL_THRESHOLD) {
-      setIsRefreshing(true);
-      loadMore();
-    }
-    setStartY(null);
-    setPullDistance(0);
-  };
-
-  useEffect(() => {
-    if (!isLoading) {
-      setIsRefreshing(false);
-    }
-  }, [isLoading]);
 
   if (results.length === 0 && !isLoading) {
     return null;

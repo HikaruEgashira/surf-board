@@ -1,5 +1,4 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
 import { SearchInput } from '../SearchBar/SearchInput';
 import { HeroContent } from './HeroContent';
 import { HeroFeatures } from './HeroFeatures';
@@ -7,6 +6,7 @@ import CodeResultSkeleton from '../CodeResultSkeleton';
 import { cn } from '../../utils/cn';
 import { springTransition, fadeInUp, searchContainer } from '../../animations';
 import { containerStyles } from '../../utils/styles';
+import { useSearchHero } from '../../hooks/useSearchHero';
 
 interface SearchHeroProps {
   onSearch: (query: string) => void;
@@ -15,21 +15,12 @@ interface SearchHeroProps {
 }
 
 export default function SearchHero({ onSearch, isLoading, hasResults }: SearchHeroProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const handleChange = (value: string) => {
-    setSearchQuery(value);
-    onSearch(value.trim());
-  };
-
-  const handleSubmit = () => {
-    onSearch(searchQuery.trim());
-  };
-
-  const handleClear = () => {
-    setSearchQuery('');
-    onSearch('');
-  };
+  const {
+    searchQuery,
+    handleChange,
+    handleSubmit,
+    handleClear,
+  } = useSearchHero({ onSearch });
 
   return (
     <motion.div

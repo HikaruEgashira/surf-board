@@ -1,34 +1,26 @@
-import { useEffect, useRef, useState } from 'react';
 import SearchHero from './SearchHero';
 import SearchResults from './SearchResults';
-import { useCodeSearch } from '../hooks/useCodeSearch';
 import MainLayout from '../layouts/MainLayout';
+import { useSearchState } from '../hooks/useSearchState';
 
 export function AppContent() {
-    const [query, setQuery] = useState('');
-    const { results, isLoading, error, hasMore, searchCode, loadMore } = useCodeSearch();
-    const isInitialMount = useRef(true);
-
-    useEffect(() => {
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
-            if (query) {
-                searchCode(query);
-            }
-        }
-    }, [query, searchCode]);
-
-    const handleSearch = (newQuery: string) => {
-        setQuery(newQuery);
-        searchCode(newQuery);
-    };
+    const {
+        query,
+        results,
+        isLoading,
+        error,
+        hasMore,
+        loadMore,
+        handleSearch,
+        hasResults,
+    } = useSearchState();
 
     return (
         <MainLayout error={error}>
             <SearchHero
                 onSearch={handleSearch}
                 isLoading={isLoading}
-                hasResults={query ? results.length > 0 : false}
+                hasResults={hasResults}
             />
             {query && results.length > 0 && (
                 <SearchResults
