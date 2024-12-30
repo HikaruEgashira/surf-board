@@ -2,6 +2,12 @@ import { createContext, useContext, ReactNode } from 'react';
 import { useSearch } from '../hooks/useSearch';
 import type { CodeSearchResult } from '../types';
 
+export interface SearchFilters {
+    language?: string;
+    stars?: string;
+    updatedAt?: string;
+}
+
 interface SearchContextValue {
     // 検索状態
     query: string;
@@ -11,6 +17,7 @@ interface SearchContextValue {
     hasMore: boolean;
     hasResults: boolean;
     isFocused: boolean;
+    filters: SearchFilters;
 
     // 入力処理
     handleChange: (value: string) => void;
@@ -18,6 +25,11 @@ interface SearchContextValue {
     handleClear: () => void;
     handleBlur: () => void;
     handleFocus: () => void;
+
+    // フィルター処理
+    setFilter: (key: keyof SearchFilters, value: string) => void;
+    removeFilter: (key: keyof SearchFilters) => void;
+    clearFilters: () => void;
 
     // 無限スクロール
     loadMore: () => void;

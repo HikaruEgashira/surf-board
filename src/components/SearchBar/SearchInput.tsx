@@ -1,5 +1,7 @@
 import { Search, XCircle } from 'lucide-react';
 import { useSearchContext } from '../../context/SearchContext';
+import { SearchSuggestions } from './SearchSuggestions';
+import { useSearchHistory } from '../../hooks/useSearchHistory';
 
 interface SearchInputProps {
   placeholder?: string;
@@ -18,7 +20,32 @@ export function SearchInput({
     handleBlur,
     handleFocus,
     inputRef,
+    isFocused,
+    filters,
   } = useSearchContext();
+
+  const {
+    history,
+    addToHistory,
+    clearHistory,
+    removeFromHistory,
+    getPopularQueries,
+  } = useSearchHistory();
+
+  const handleQuerySelect = (selectedQuery: string, selectedFilters?: any) => {
+    handleChange(selectedQuery);
+    if (selectedFilters) {
+      // TODO: Apply filters from history
+    }
+    handleSubmit();
+  };
+
+  const handleSearchSubmit = () => {
+    if (query.trim()) {
+      addToHistory(query, filters);
+      handleSubmit();
+    }
+  };
 
   return (
     <div className={`relative flex-1 mx-auto group ${className}`}>
@@ -33,7 +60,7 @@ export function SearchInput({
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            handleSubmit();
+            handleSearchSubmit();
           }
         }}
         onFocus={handleFocus}
@@ -61,6 +88,15 @@ export function SearchInput({
                      border border-gray-200/70 dark:border-gray-700/50 rounded-[3px]">
         /
       </kbd>
+
+      <SearchSuggestions
+        history={history}
+        popularQueries={getPopularQueries()}
+        onSelectQuery={handleQuerySelect}
+        onRemoveFromHistory={removeFromHistory}
+        onClearHistory={clearHistory}
+        isVisible={isFocused && !query}
+      />
     </div>
   );
 }

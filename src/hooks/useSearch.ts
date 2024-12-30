@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect, RefObject } from 'react';
 import { useCodeSearch } from './useCodeSearch';
 import type { CodeSearchResult } from '../types';
+import type { SearchFilters } from '../context/SearchContext';
 
 interface UseSearchProps {
     onClose?: () => void;
@@ -17,6 +18,7 @@ interface UseSearchReturn {
     hasMore: boolean;
     hasResults: boolean;
     isFocused: boolean;
+    filters: SearchFilters;
 
     // 入力処理
     handleChange: (value: string) => void;
@@ -24,6 +26,11 @@ interface UseSearchReturn {
     handleClear: () => void;
     handleBlur: () => void;
     handleFocus: () => void;
+
+    // フィルター処理
+    setFilter: (key: keyof SearchFilters, value: string) => void;
+    removeFilter: (key: keyof SearchFilters) => void;
+    clearFilters: () => void;
 
     // 無限スクロール
     loadMore: () => void;
@@ -44,6 +51,7 @@ interface UseSearchReturn {
 export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => {
     // 検索状態の管理
     const [query, setQuery] = useState('');
+    const [filters, setFilters] = useState<SearchFilters>({});
     const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -156,6 +164,30 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
         }
     }, [isLoading]);
 
+    // フィルター処理
+    const setFilter = useCallback((key: keyof SearchFilters, value: string) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+    }, []);
+
+    const removeFilter = useCallback((key: keyof SearchFilters) => {
+        setFilters(prev => {
+            const newFilters = { ...prev };
+            delete newFilters[key];
+            return newFilters;
+        });
+    }, []);
+
+    const clearFilters = useCallback(() => {
+        setFilters({});
+    }, []);
+
+    // フィルターが変更されたときに検索を実行
+    useEffect(() => {
+        if (query.trim()) {
+            searchCode(query.trim());
+        }
+    }, [filters, query, searchCode]);
+
     return {
         // 検索状態
         query,
@@ -165,6 +197,7 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
         hasMore,
         hasResults,
         isFocused,
+        filters,
 
         // 入力処理
         handleChange,
@@ -172,6 +205,11 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
         handleClear,
         handleBlur,
         handleFocus,
+
+        // フィルター処理
+        setFilter,
+        removeFilter,
+        clearFilters,
 
         // 無限スクロール
         loadMore,
