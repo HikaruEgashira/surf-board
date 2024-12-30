@@ -52,18 +52,11 @@ export default function SearchHero() {
 
         <AnimatePresence>
           {(isLoading || isFocused) && !hasResults && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="w-full overflow-hidden"
-            >
-              <div className={cn(containerStyles, "max-h-[60vh] overflow-y-auto")}>
-                {[...Array(5)].map((_, index) => (
-                  <CodeResultSkeleton key={`skeleton-${index}`} />
-                ))}
-              </div>
-            </motion.div>
+            <div className={containerStyles}>
+              {[...Array(10)].map((_, index) => (
+                <CodeResultSkeleton key={`skeleton-${index}`} />
+              ))}
+            </div>
           )}
         </AnimatePresence>
 
