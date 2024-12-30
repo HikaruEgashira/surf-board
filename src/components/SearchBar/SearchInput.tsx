@@ -29,8 +29,8 @@ export function SearchInput({
         type="text"
         value={query}
         onChange={(e) => handleChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
+        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+          if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
             e.preventDefault();
             handleSubmit();
           }
