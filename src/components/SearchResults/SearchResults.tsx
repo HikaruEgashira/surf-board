@@ -83,15 +83,15 @@ export default function SearchResults({ results, isLoading, hasMore, loadMore, i
           computeItemKey={(_, result) => getResultKey(result)}
           components={{
             Footer: () => (
-              <>
+              <div ref={bottomRef}>
                 {isLoading && <LoadingSkeletons />}
-                {hasMore && !isLoading && <div ref={bottomRef} className="py-4" />}
+                {!isLoading && !isLastPage && <div className="py-4" />}
                 {isLastPage && <EndMessage />}
-              </>
+              </div>
             ),
           }}
-          increaseViewportBy={200}
-          overscan={5}
+          increaseViewportBy={500}
+          overscan={10}
         />
       </AnimatePresence>
     </div>
