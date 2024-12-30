@@ -91,34 +91,14 @@ export function Settings({ onClose }: { onClose: () => void }) {
                                              shadow-sm placeholder-gray-400
                                              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
                                              bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                    pattern="^gh[ps]_[a-zA-Z0-9]{36,251}$"
-                                    title="Please enter a valid GitHub token starting with 'ghp_' or 'ghs_'"
+                                    pattern="^gh[pso]_[a-zA-Z0-9]{36,251}$"
+                                    title="Please enter a valid GitHub token starting with 'gho_' or 'ghp_' or 'ghs_'"
                                     autoComplete="new-password"
                                     spellCheck="false"
                                     autoCorrect="off"
                                     autoCapitalize="off"
                                     data-lpignore="true"
                                 />
-                                <div className="mt-2 space-y-2">
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        A GitHub personal access token is required to enable code search.
-                                    </p>
-                                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                                        To get a token:
-                                        <ol className="list-decimal list-inside mt-1 space-y-1">
-                                            <li>Go to <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">GitHub Token Settings</a></li>
-                                            <li>Click "Generate new token (classic)"</li>
-                                            <li>Select the following scopes:
-                                                <ul className="list-disc list-inside ml-4 mt-1">
-                                                    <li>repo (for private repos)</li>
-                                                    <li>read:packages</li>
-                                                    <li>read:org</li>
-                                                </ul>
-                                            </li>
-                                            <li>Generate and copy the token</li>
-                                        </ol>
-                                    </div>
-                                </div>
                             </form>
                         </div>
 
@@ -147,7 +127,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
                                 htmlFor="theme-toggle"
                                 className="text-sm font-medium text-gray-700 dark:text-gray-300"
                             >
-                                Nord Dark Theme
+                                Theme
                             </label>
                             <button
                                 id="theme-toggle"

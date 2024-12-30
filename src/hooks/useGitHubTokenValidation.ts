@@ -52,9 +52,9 @@ export const useGitHubTokenValidation = ({
             return;
         }
 
-        const tokenPattern = /^gh[ps]_[a-zA-Z0-9]{36,251}$/;
+        const tokenPattern = /^gh[ops]_[a-zA-Z0-9]{36,251}$/;
         if (!tokenPattern.test(inputToken)) {
-            setValidationError('Invalid token format. Token should start with "ghp_" or "ghs_"');
+            setValidationError('Invalid token format. Token should start with "gho_", "ghp_" or "ghs_"');
             return;
         }
 
