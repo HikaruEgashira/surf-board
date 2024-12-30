@@ -16,26 +16,24 @@ interface UseSearchReturn {
     error: string | null;
     hasMore: boolean;
     hasResults: boolean;
-    isFocused: boolean;
 
     // 入力処理
     handleChange: (value: string) => void;
     handleSubmit: () => void;
     handleClear: () => void;
     handleBlur: () => void;
-    handleFocus: () => void;
 
     // 無限スクロール
     loadMore: () => void;
 
-    // プルトゥリフレッシュ
+    // pull to refresh
     pullDistance: number;
     isRefreshing: boolean;
     handleTouchStart: (e: React.TouchEvent) => void;
     handleTouchMove: (e: React.TouchEvent) => void;
     handleTouchEnd: () => void;
 
-    // 参照
+    // ref
     inputRef: React.RefObject<HTMLInputElement>;
     bottomRef: RefObject<HTMLDivElement>;
     containerRef: RefObject<HTMLDivElement>;
@@ -44,7 +42,6 @@ interface UseSearchReturn {
 export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => {
     // 検索状態の管理
     const [query, setQuery] = useState('');
-    const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -80,18 +77,12 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
         onClose?.();
     }, [searchCode, onClose]);
 
-    const handleFocus = useCallback(() => {
-        setIsFocused(true);
-    }, []);
-
     const handleBlur = useCallback(() => {
         if (query.trim() === '') {
             setQuery('');
         }
-        setIsFocused(false);
     }, [query]);
 
-    // スラッシュキーでの検索フォーカス
     // スラッシュキーでの検索フォーカス
     useEffect(() => {
         const handleSlashKey = (e: KeyboardEvent) => {
@@ -110,7 +101,7 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
         return () => window.removeEventListener('keydown', handleSlashKey);
     }, []);
 
-    // 自動ロード機能
+    // 無限スクロール
     useEffect(() => {
         if (hasMore && !isLoading && results.length > 0 && bottomRef.current) {
             const container = bottomRef.current.parentElement;
@@ -122,7 +113,7 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
 
     const hasResults = query ? results.length > 0 : false;
 
-    // プルトゥリフレッシュのハンドラー
+    // pull to refresh
     const handleTouchStart = (e: React.TouchEvent) => {
         if (containerRef.current?.scrollTop === 0) {
             setStartY(e.touches[0].clientY);
@@ -164,14 +155,12 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
         error,
         hasMore,
         hasResults,
-        isFocused,
 
         // 入力処理
         handleChange,
         handleSubmit,
         handleClear,
         handleBlur,
-        handleFocus,
 
         // 無限スクロール
         loadMore,

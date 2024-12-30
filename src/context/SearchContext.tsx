@@ -10,26 +10,24 @@ interface SearchContextValue {
     error: string | null;
     hasMore: boolean;
     hasResults: boolean;
-    isFocused: boolean;
 
     // 入力処理
     handleChange: (value: string) => void;
     handleSubmit: () => void;
     handleClear: () => void;
     handleBlur: () => void;
-    handleFocus: () => void;
 
     // 無限スクロール
     loadMore: () => void;
 
-    // プルトゥリフレッシュ
+    // pull to refresh
     pullDistance: number;
     isRefreshing: boolean;
     handleTouchStart: (e: React.TouchEvent) => void;
     handleTouchMove: (e: React.TouchEvent) => void;
     handleTouchEnd: () => void;
 
-    // 参照
+    // ref
     inputRef: React.RefObject<HTMLInputElement>;
     bottomRef: React.RefObject<HTMLDivElement>;
     containerRef: React.RefObject<HTMLDivElement>;
