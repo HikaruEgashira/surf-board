@@ -53,7 +53,7 @@ const searchCache = new Map<string, CacheEntry>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5分
 
 export function useCodeSearch({
-  debounceDelay = 300,
+  debounceDelay = 1000,
   minQueryLength = 3
 }: UseCodeSearchOptions = {}) {
   const { token } = useGitHubToken();
