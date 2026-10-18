@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.0",
-    "framer-motion": "^12.43.0",
+    "framer-motion": "^13.1.1",
     "lucide-react": "^1.48.0",
     "prismjs": "^1.30.0",
     "react": "^19.3.0",
