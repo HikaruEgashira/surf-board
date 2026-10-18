@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, linux, arm64, hikae-flash]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -39,7 +39,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, linux, arm64, hikae-flash]
     needs: build
     steps:
       - name: Deploy to GitHub Pages
