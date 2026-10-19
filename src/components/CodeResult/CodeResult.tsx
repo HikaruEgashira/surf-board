@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { CodeSearchResult } from '../../types';
 import { highlightCode } from '../../utils/syntax';
@@ -34,7 +34,7 @@ export default function CodeResult({ result }: CodeResultProps) {
         {result.text_matches?.map((match, index) => (
           <CodeSnippet
             key={index}
-            ref={el => codeRefs.current[index] = el}
+            ref={el => { codeRefs.current[index] = el; }}
             match={match}
           />
         ))}

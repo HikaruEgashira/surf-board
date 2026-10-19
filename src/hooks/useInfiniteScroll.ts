@@ -8,7 +8,7 @@ interface UseInfiniteScrollOptions {
 
 export function useInfiniteScroll(
     callback: () => void,
-    targetRef: RefObject<HTMLElement>,
+    targetRef: RefObject<HTMLElement | null>,
     { threshold = 1000, isLoading = false, hasMore = false }: UseInfiniteScrollOptions = {}
 ) {
     const observer = useRef<IntersectionObserver | null>(null);

@@ -49,6 +49,11 @@ interface CacheEntry {
   timestamp: number;
 }
 
+interface SearchResponseResult {
+  data: SearchResponse;
+  shouldFetchNextPage: boolean;
+}
+
 const searchCache = new Map<string, CacheEntry>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5分
 
@@ -69,9 +74,10 @@ export function useCodeSearch({
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef<number>(0);
   const filteredCountRef = useRef<number>(0);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  const errorTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastSearchRef = useRef<string>('');
+  const executeSearchRef = useRef<((query: string, page?: number, retryCount?: number) => Promise<void>) | null>(null);
 
   // キャッシュチェック関数
   const checkCache = useCallback((query: string): CacheEntry | null => {
@@ -97,10 +103,9 @@ export function useCodeSearch({
 
   const handleSearchResponse = useCallback(async (
     response: Response,
-    query: string,
     page: number,
     currentRequestId: number
-  ): Promise<SearchResponse | null> => {
+  ): Promise<SearchResponseResult | null> => {
     if (currentRequestId !== requestIdRef.current) {
       return null;
     }
@@ -165,16 +170,11 @@ export function useCodeSearch({
       setHasMore(shouldContinue);
 
       // フィルタリングされた結果が少ない場合、自動的に次のページを読み込む
-      if (excludeNonProgramming && shouldContinue && newResults.length < API_CONSTANTS.PER_PAGE) {
-        queueMicrotask(() => {
-          if (currentRequestId === requestIdRef.current) {
-            executeSearch(query, page + 1);
-          }
-        });
-      }
+      const shouldFetchNextPage =
+        excludeNonProgramming && shouldContinue && newResults.length < API_CONSTANTS.PER_PAGE;
 
       setCurrentPage(page);
-      return data;
+      return { data, shouldFetchNextPage };
     } catch (error) {
       if (currentRequestId === requestIdRef.current) {
         throw error;
@@ -228,14 +228,23 @@ export function useCodeSearch({
         signal: abortControllerRef.current.signal
       });
 
-      const data = await handleSearchResponse(response, query, page, currentRequestId);
+      const searchResult = await handleSearchResponse(response, page, currentRequestId);
 
       // 結果をキャッシュに保存（ページ1の場合のみ）
-      if (page === 1 && data) {
+      if (page === 1 && searchResult) {
         searchCache.set(query, {
-          results: data.items,
-          totalResults: data.total_count,
+          results: searchResult.data.items,
+          totalResults: searchResult.data.total_count,
           timestamp: Date.now()
+        });
+      }
+
+      // フィルタリングされた結果が少ない場合、自動的に次のページを読み込む
+      if (searchResult?.shouldFetchNextPage && currentRequestId === requestIdRef.current) {
+        queueMicrotask(() => {
+          if (currentRequestId === requestIdRef.current) {
+            void executeSearchRef.current?.(query, page + 1);
+          }
         });
       }
 
@@ -247,7 +256,7 @@ export function useCodeSearch({
       if (retryCount < API_CONSTANTS.MAX_RETRIES && err instanceof Error &&
         (err.message.includes('network') || err.message.includes('timeout'))) {
         await utils.delay(API_CONSTANTS.RETRY_DELAY * Math.pow(2, retryCount));
-        return executeSearch(query, page, retryCount + 1);
+        return executeSearchRef.current?.(query, page, retryCount + 1);
       }
 
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -258,6 +267,10 @@ export function useCodeSearch({
       }
     }
   }, [token, handleSearchResponse, checkCache]);
+
+  useEffect(() => {
+    executeSearchRef.current = executeSearch;
+  }, [executeSearch]);
 
   const searchCode = useCallback((query: string) => {
     const trimmedQuery = query.trim();

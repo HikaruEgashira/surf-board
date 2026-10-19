@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import { forwardRef } from 'react';
 import type { TextMatch } from '../../types';
 
 interface CodeSnippetProps {
@@ -7,6 +7,9 @@ interface CodeSnippetProps {
 
 export const CodeSnippet = forwardRef<HTMLElement, CodeSnippetProps>(
   function CodeSnippet({ match }, ref) {
+    // The parent uses the index to highlight the referenced code element.
+    void match;
+
     return (
       <div className="font-mono text-sm overflow-x-auto px-3">
         <pre className="text-nord-0 dark:text-nord-6">
