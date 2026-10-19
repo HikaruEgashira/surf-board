@@ -34,9 +34,9 @@ interface UseSearchReturn {
     handleTouchEnd: () => void;
 
     // ref
-    inputRef: React.RefObject<HTMLInputElement>;
-    bottomRef: RefObject<HTMLDivElement>;
-    containerRef: RefObject<HTMLDivElement>;
+    inputRef: RefObject<HTMLInputElement | null>;
+    bottomRef: RefObject<HTMLDivElement | null>;
+    containerRef: RefObject<HTMLDivElement | null>;
 }
 
 export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => {
@@ -142,9 +142,9 @@ export const useSearch = ({ onClose }: UseSearchProps = {}): UseSearchReturn => 
 
     // リフレッシュ状態のリセット
     useEffect(() => {
-        if (!isLoading) {
-            setIsRefreshing(false);
-        }
+        if (isLoading) return;
+        const timeout = setTimeout(() => setIsRefreshing(false), 0);
+        return () => clearTimeout(timeout);
     }, [isLoading]);
 
     return {

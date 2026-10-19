@@ -28,9 +28,9 @@ interface SearchContextValue {
     handleTouchEnd: () => void;
 
     // ref
-    inputRef: React.RefObject<HTMLInputElement>;
-    bottomRef: React.RefObject<HTMLDivElement>;
-    containerRef: React.RefObject<HTMLDivElement>;
+    inputRef: React.RefObject<HTMLInputElement | null>;
+    bottomRef: React.RefObject<HTMLDivElement | null>;
+    containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const SearchContext = createContext<SearchContextValue | null>(null);

@@ -7,7 +7,6 @@ function AppContent() {
     const {
         query,
         results,
-        isLoading,
         error,
     } = useSearchContext();
 

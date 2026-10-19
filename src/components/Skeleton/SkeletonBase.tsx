@@ -1,10 +1,10 @@
-import type { HTMLAttributes } from 'react';
 import { motion } from 'framer-motion';
+import type { HTMLMotionProps } from 'framer-motion';
 import { cn } from '../../utils/cn';
 
-interface SkeletonBaseProps extends HTMLAttributes<HTMLDivElement> {
+type SkeletonBaseProps = Omit<HTMLMotionProps<'div'>, 'animate'> & {
   animate?: boolean;
-}
+};
 
 export function SkeletonBase({ className, animate = true, ...props }: SkeletonBaseProps) {
   return (
@@ -17,7 +17,7 @@ export function SkeletonBase({ className, animate = true, ...props }: SkeletonBa
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
-      {...(props as any)}
+      {...props}
     />
   );
 }

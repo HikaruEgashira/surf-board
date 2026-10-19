@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Search, GitBranch, Settings as SettingsIcon } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils/cn';
