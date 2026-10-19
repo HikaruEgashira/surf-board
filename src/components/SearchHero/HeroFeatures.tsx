@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Github, Settings as SettingsIcon } from 'lucide-react';
+import { Search, GitBranch, Settings as SettingsIcon } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils/cn';
 import { Settings } from '../Settings/Settings';
@@ -21,7 +21,7 @@ export function HeroFeatures() {
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
         >
-          <Github className="w-4 h-4" />
+          <GitBranch className="w-4 h-4" />
           <span>Powered by GitHub</span>
         </a>
         <div className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
